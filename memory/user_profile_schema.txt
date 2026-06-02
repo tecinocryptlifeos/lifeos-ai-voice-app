@@ -1,0 +1,32 @@
+LIFEOS AI — USER PROFILE MEMORY SCHEMA V1
+
+Purpose:
+Store useful user context so LifeOS AI can audit decisions with better personal relevance.
+
+Memory Fields:
+1. main_goal
+2. current_project
+3. priority_focus
+4. risk_level
+5. repeated_mistake
+6. execution_style
+7. decision_pattern
+8. notes
+
+Rules:
+- Store only useful decision context.
+- Do not store private secrets, API keys, passwords, or payment details.
+- Do not store sensitive personal information unless the user clearly asks.
+- Use memory to improve decision audits, not to flatter the user.
+- If memory is missing, ask the user to set a profile.
+- User can update memory anytime.
+- User can view memory anytime.
+
+Planned Commands:
+/profile - View saved LifeOS AI profile
+/setgoal - Save main goal
+/setproject - Save current project
+/setfocus - Save priority focus
+/setrisk - Save risk level
+/setmistake - Save repeated mistake
+/clearmemory - Clear saved profile

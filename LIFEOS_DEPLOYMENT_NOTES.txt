@@ -1,0 +1,22 @@
+LifeOS AI Voice App — Deployment Notes
+
+Local Termux mode:
+  HOST: 127.0.0.1
+  PORT: 8787
+  Start command:
+    python app/lifeos_voice_server.py
+
+Public hosting mode:
+  Set environment variables:
+    GEMINI_API_KEY = your Gemini API key
+    LIFEOS_HOST = 0.0.0.0
+    PORT = platform-provided port, or set manually if required
+
+Public start command:
+  python app/lifeos_voice_server.py
+
+Important:
+  Do not expose GEMINI_API_KEY in the frontend.
+  Keep all AI calls on the backend server.
+  The web app files are served from:
+    web/lifeos_voice/index.html

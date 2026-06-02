@@ -1,0 +1,44 @@
+# Secrets
+.env
+*.env
+.truthlayer_env
+*_env*
+*.key
+
+# Logs
+*.log
+nohup.out
+bot_boot_log.txt
+truthlayer_*.log
+lifeos_voice_server.log
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Local backups
+*.pre_*
+*.backup*
+backups/
+truthlayer_backups/
+
+# Generated audio files
+web/lifeos_voice/audio/*.wav
+web/lifeos_voice/audio/voice_tests/*.wav
+
+# Local PID/runtime files
+*.pid
+
+# Public deployment cleanup
+data/
+app/bot_backup*
+app/*.broken_*
+app/*.pre_*
+web/lifeos_voice/*.pre_*
+web/lifeos_voice/*.before_*
+test_voice.wav
+*.ogg
+*.oga
+*.pcm
+*.wav

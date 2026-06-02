@@ -1,0 +1,2 @@
+# LifeOS AI Voice App currently uses Python standard library only.
+# No external Python packages are required for the current server.

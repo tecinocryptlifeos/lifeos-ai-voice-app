@@ -1,0 +1,45 @@
+LIFEOS AI BUILD CHECKPOINT
+
+Current point:
+STEP 17 complete.
+
+Completed features:
+- Telegram bot working
+- Gemini AI connected
+- Background running system working
+- Short commands working:
+  lifeos-start
+  lifeos-stop
+  lifeos-status
+  lifeos-log
+- Profile memory working
+- Trust rules working
+- Premium Audit Format V2 working
+- Audit history working
+- /last working
+- /showaudit working
+- /rate feedback system working
+- /feedback review system working
+- Admin protection working
+- /myid working
+- /ownerfeedback working
+- Voice input working
+- Telegram voice note transcription working
+- Voice-note audits working
+
+Current status:
+LifeOS AI is running.
+
+Next step:
+STEP 18 - Add voice output so LifeOS AI can speak back with a short audio summary.
+
+Important files:
+app/bot.py
+app/bot_backup_before_voice_input.py
+data/user_profiles.json
+data/audit_history.jsonl
+data/audit_feedback.jsonl
+data/voice_notes/
+credibility/trust_rules_v1.txt
+credibility/premium_audit_format_v2.txt
+CURRENT_STEP.txt

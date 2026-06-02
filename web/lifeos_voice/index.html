@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LifeOS AI</title>
+  <style>
+    :root {
+      --bg: #07080d;
+      --panel: rgba(255,255,255,0.08);
+      --line: rgba(255,255,255,0.14);
+      --text: #f6f3ea;
+      --muted: rgba(246,243,234,0.72);
+      --gold: #f2c75c;
+      --danger: #ff7b7b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(242,199,92,0.22), transparent 34%),
+        radial-gradient(circle at top right, rgba(86,118,255,0.18), transparent 28%),
+        linear-gradient(145deg, #07080d, #101421 60%, #06070b);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 560px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 30px;
+      padding: 24px;
+      box-shadow: 0 28px 90px rgba(0,0,0,0.52);
+      backdrop-filter: blur(20px);
+    }
+
+    .brand {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .brand-name {
+      font-size: 13px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .badge {
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-size: 12px;
+      color: var(--gold);
+      background: rgba(0,0,0,0.22);
+    }
+
+    h1 {
+      font-size: 36px;
+      line-height: 1.02;
+      margin: 0 0 12px;
+      letter-spacing: -0.04em;
+    }
+
+    .intro {
+      color: var(--muted);
+      line-height: 1.55;
+      margin: 0 0 18px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 15px;
+      background: rgba(0,0,0,0.26);
+      color: var(--text);
+      font-size: 15px;
+      resize: vertical;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: rgba(242,199,92,0.75);
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 20px;
+      padding: 16px;
+      margin-top: 12px;
+      background: var(--gold);
+      color: #111;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    button.secondary {
+      background: rgba(255,255,255,0.10);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .status {
+      margin-top: 15px;
+      color: var(--gold);
+      font-size: 14px;
+      min-height: 20px;
+    }
+
+    .response {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 22px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(246,243,234,0.92);
+      white-space: pre-wrap;
+      line-height: 1.55;
+      min-height: 90px;
+    }
+
+    .footnote {
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(246,243,234,0.48);
+      line-height: 1.45;
+    }
+  
+    #speakerBtn { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="brand">
+      <div class="brand-name">LifeOS AI</div>
+      <div class="badge">Premium Synthetic Artificial Intelligence</div>
+    </div>
+
+    <h1>LifeOS AI</h1>
+    <p class="intro">
+      Speak or type your decision. LifeOS AI will audit it and answer with a premium voice response.
+      Microphone conversation comes in the next build step.
+    </p>
+
+    <textarea id="textInput" placeholder="Example: Audit this decision: I should organize my system before scaling my business."></textarea>
+
+    <button id="sendBtn">Reveal Future Output</button>
+    <button id="speakerBtn" class="secondary" style="display:none;">Test Speaker</button>
+
+    <div id="status" class="status">Synthetic Intelligence</div>
+    <div id="response" class="response">Your future direction will appear here — analyzed, spoken, and refined by synthetic intelligence.</div>
+
+    <div class="footnote">
+      LifeOS Synthetic Artificial Intelligence analyzes your decisions into future directions. Powered by lifeosdaily.blogspot.com · Tecino’s Channel · © 2026
+    </div>
+  </main>
+
+  <script>
+    const textInput = document.getElementById("textInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const speakerBtn = document.getElementById("speakerBtn");
+    const statusBox = document.getElementById("status");
+    const responseBox = document.getElementById("response");
+
+    function setStatus(message) {
+      statusBox.textContent = message;
+    }
+
+    function speak(text) {
+      if (!("speechSynthesis" in window)) {
+        setStatus("Speech output is not supported in this browser.");
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.94;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    speakerBtn.onclick = () => {
+      speak("LifeOS AI voice output is working from this app.");
+      setStatus("Speaker test sent.");
+    };
+
+    sendBtn.onclick = async () => {
+      const text = textInput.value.trim();
+
+      if (!text) {
+        setStatus("Type a decision first.");
+        return;
+      }
+
+      sendBtn.disabled = true;
+      setStatus("Synthetic Intelligence loading");
+      responseBox.textContent = "";
+
+      try {
+        const res = await fetch("/api/text-audit", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ text })
+        });
+
+        const data = await res.json();
+
+        if (!data.ok) {
+          throw new Error(data.error || "Unknown server error");
+        }
+
+        responseBox.textContent = data.voice || data.reply;
+
+        if (data.audio_url) {
+          setStatus("Future output ready. Playing now...");
+          const audio = new Audio(data.audio_url + "?t=" + Date.now());
+
+          audio.onended = () => {
+            setStatus("Premium voice complete.");
+          };
+
+          audio.onerror = () => {
+            setStatus("Premium audio could not play. Falling back to browser voice.");
+            speak(data.voice || data.reply);
+          };
+
+          audio.play().catch(() => {
+            setStatus("Tap Test Speaker if browser blocks autoplay. Falling back to browser voice.");
+            speak(data.voice || data.reply);
+          });
+        } else {
+          setStatus("Future output ready. Speaking now...");
+          speak(data.voice || data.reply);
+        }
+      } catch (err) {
+        setStatus("Error: " + err.message);
+        responseBox.textContent = "The request failed. Check the Termux server log.";
+      } finally {
+        sendBtn.disabled = false;
+      }
+    };
+  </script>
+
+<script id="LIFEOS_MIC_INPUT_PATCH_FINAL">
+(function () {
+  const textInput = document.getElementById("textInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const statusBox = document.getElementById("status");
+
+  if (!textInput || !sendBtn || !statusBox) {
+    console.warn("LifeOS mic patch: required page elements not found.");
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  const buttonWrap = document.createElement("div");
+  buttonWrap.style.display = "grid";
+  buttonWrap.style.gridTemplateColumns = "1fr";
+  buttonWrap.style.gap = "10px";
+  buttonWrap.style.marginTop = "12px";
+
+  const voiceBtn = document.createElement("button");
+  voiceBtn.id = "lifeosVoiceInputBtn";
+  voiceBtn.textContent = "🎙️ Start Voice Conversation";
+  voiceBtn.style.background = "#8ee6a3";
+  voiceBtn.style.color = "#07110a";
+
+  const stopBtn = document.createElement("button");
+  stopBtn.id = "lifeosStopVoiceBtn";
+  stopBtn.textContent = "Stop Listening";
+  stopBtn.disabled = true;
+  stopBtn.style.background = "rgba(255,123,123,0.14)";
+  stopBtn.style.color = "#ffd4d4";
+  stopBtn.style.border = "1px solid rgba(255,123,123,0.25)";
+
+  buttonWrap.appendChild(voiceBtn);
+  buttonWrap.appendChild(stopBtn);
+
+  textInput.insertAdjacentElement("afterend", buttonWrap);
+
+  function setStatus(message) {
+    statusBox.textContent = message;
+  }
+
+  if (!SpeechRecognition) {
+    voiceBtn.disabled = true;
+    setStatus("Voice input is not supported in this browser. Use Chrome or type your decision.");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = true;
+  recognition.continuous = false;
+
+  let listening = false;
+  let finalCapturedText = "";
+
+  recognition.onstart = function () {
+    listening = true;
+    finalCapturedText = "";
+    textInput.value = "";
+    voiceBtn.disabled = true;
+    stopBtn.disabled = false;
+    setStatus("Listening... speak your decision now.");
+  };
+
+  recognition.onresult = function (event) {
+    let interimText = "";
+    let finalText = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+
+      if (event.results[i].isFinal) {
+        finalText += transcript;
+      } else {
+        interimText += transcript;
+      }
+    }
+
+    const visibleText = (finalText || interimText).trim();
+
+    if (visibleText) {
+      textInput.value = visibleText;
+    }
+
+    if (finalText.trim()) {
+      finalCapturedText = finalText.trim();
+      setStatus("Synthetic Intelligence loading");
+      recognition.stop();
+    }
+  };
+
+  recognition.onerror = function (event) {
+    listening = false;
+    voiceBtn.disabled = false;
+    stopBtn.disabled = true;
+    setStatus("Voice input error: " + event.error + ". You can type instead.");
+  };
+
+  recognition.onend = function () {
+    listening = false;
+    voiceBtn.disabled = false;
+    stopBtn.disabled = true;
+
+    const text = finalCapturedText.trim() || textInput.value.trim();
+
+    if (text) {
+      textInput.value = text;
+      setStatus("Synthetic Intelligence loading");
+      sendBtn.click();
+    } else {
+      setStatus("Listening ended. No clear speech captured.");
+    }
+  };
+
+  voiceBtn.onclick = function () {
+    if (listening) return;
+
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    try {
+      recognition.start();
+    } catch (err) {
+      setStatus("Could not start voice input: " + err.message);
+    }
+  };
+
+  stopBtn.onclick = function () {
+    if (listening) {
+      recognition.stop();
+      setStatus("Listening stopped.");
+    }
+  };
+})();
+</script>
+
+</body>
+</html>

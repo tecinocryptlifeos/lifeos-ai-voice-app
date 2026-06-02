@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: lifeos-ai-voice-app
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app/lifeos_voice_server.py
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: LIFEOS_HOST
+        value: 0.0.0.0
+      - key: LIFEOS_TTS_VOICE
+        value: Despina
+      - key: LIFEOS_TTS_MODEL
+        value: gemini-3.1-flash-tts-preview
