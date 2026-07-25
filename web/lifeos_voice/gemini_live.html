@@ -762,6 +762,66 @@ html.lifeos-voice-page-hidden .orb::after {
 .search-attribution[hidden]{display:none}.search-source-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:7px}.search-source-list a{display:inline-flex;padding:5px 8px;border:1px solid rgba(234,190,83,.34);border-radius:999px;color:#ebc25c;text-decoration:none}.google-search-suggestions{margin-bottom:8px;max-width:100%;overflow:auto}
 [hidden]{display:none!important}
 </style>
+<!-- LIFEOS_PASSWORD_VISIBILITY_V1:STYLE_START -->
+<style>
+.lifeos-password-field {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.lifeos-password-field > input,
+.lifeos-password-field > .lifeos-password-toggle {
+  grid-area: 1 / 1 !important;
+}
+.lifeos-password-field > input {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding-inline-end: 3.25rem !important;
+}
+.lifeos-password-toggle {
+  appearance: none !important;
+  width: 2.75rem !important;
+  min-width: 2.75rem !important;
+  max-width: 2.75rem !important;
+  min-height: 2.5rem !important;
+  margin: 0 0.25rem 0 0 !important;
+  padding: 0 !important;
+  align-self: center !important;
+  justify-self: end !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 0.65rem !important;
+  color: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  z-index: 2 !important;
+}
+.lifeos-password-toggle:hover { background: rgba(255,255,255,.08) !important; }
+.lifeos-password-toggle:focus-visible {
+  outline: 2px solid currentColor !important;
+  outline-offset: 2px !important;
+}
+.lifeos-password-toggle__icon {
+  position: relative !important;
+  display: inline-block !important;
+  line-height: 1 !important;
+  font-size: 1.15rem !important;
+}
+.lifeos-password-toggle[aria-pressed="true"] .lifeos-password-toggle__icon::after {
+  content: "";
+  position: absolute;
+  left: -0.12em;
+  right: -0.12em;
+  top: 50%;
+  border-top: 0.13em solid currentColor;
+  transform: rotate(-45deg);
+  transform-origin: center;
+}
+</style>
+<!-- LIFEOS_PASSWORD_VISIBILITY_V1:STYLE_END -->
 </head>
 <body>
 <main>
@@ -787,7 +847,12 @@ html.lifeos-voice-page-hidden .orb::after {
   <div class="lifeos-auth-tabs" data-lifeos-auth-tabs role="tablist" aria-label="LifeOS account options"><button id="authTabSignIn" type="button" role="tab" aria-selected="true">Sign in</button><button id="authTabSignUp" type="button" role="tab" aria-selected="false" data-lifeos-registration>Create account</button></div>
   <div id="authSignInPanel" data-lifeos-email-auth>
     <input id="authEmail" class="auth-input" type="email" autocomplete="email" placeholder="Email address">
-    <input id="authPassword" class="auth-input" type="password" autocomplete="current-password" placeholder="Password">
+    <!-- LIFEOS_PASSWORD_VISIBILITY_V1:CONTROL_START -->
+    <span class="lifeos-password-field" data-lifeos-password-field="v1">
+      <input id="authPassword" class="auth-input" type="password" autocomplete="current-password" placeholder="Password" data-lifeos-password-input="v1">
+      <button type="button" class="lifeos-password-toggle" data-lifeos-password-toggle="v1" data-lifeos-password-target="authPassword" aria-controls="authPassword" aria-label="Show password" aria-pressed="false"><span class="lifeos-password-toggle__icon" aria-hidden="true">&#128065;</span></button>
+    </span>
+    <!-- LIFEOS_PASSWORD_VISIBILITY_V1:CONTROL_END -->
     <div class="auth-actions"><button id="emailPasswordSignIn" class="primary" type="button">Sign in with email</button><button id="forgotPassword" class="auth-secondary" type="button">Forgot password</button></div>
   </div>
   <div id="authSignUpPanel" class="lifeos-auth-grid" data-lifeos-registration hidden>
@@ -797,7 +862,12 @@ html.lifeos-voice-page-hidden .orb::after {
     <input id="authCountry" class="auth-input" type="text" autocomplete="country-name" placeholder="Country" required>
     <input id="authPhone" class="auth-input" type="tel" autocomplete="tel" placeholder="Phone number (optional)">
     <input id="authSignupEmail" class="auth-input" type="email" autocomplete="email" placeholder="Email address" required>
-    <input id="authSignupPassword" class="auth-input" type="password" autocomplete="new-password" placeholder="Password (10+ characters, letter and number)" required>
+    <!-- LIFEOS_PASSWORD_VISIBILITY_V1:CONTROL_START -->
+    <span class="lifeos-password-field" data-lifeos-password-field="v1">
+      <input id="authSignupPassword" class="auth-input" type="password" autocomplete="new-password" placeholder="Password (10+ characters, letter and number)" required data-lifeos-password-input="v1">
+      <button type="button" class="lifeos-password-toggle" data-lifeos-password-toggle="v1" data-lifeos-password-target="authSignupPassword" aria-controls="authSignupPassword" aria-label="Show password" aria-pressed="false"><span class="lifeos-password-toggle__icon" aria-hidden="true">&#128065;</span></button>
+    </span>
+    <!-- LIFEOS_PASSWORD_VISIBILITY_V1:CONTROL_END -->
     <label class="lifeos-auth-consent"><input id="authAcceptTerms" type="checkbox"> I confirm that I am at least 13 and accept the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</label>
     <button id="emailSignUp" class="primary" type="button">Create LifeOS account</button>
   </div>
@@ -878,5 +948,28 @@ html.lifeos-voice-page-hidden .orb::after {
 <!-- LIFEOS_VOICE_AGENT_REFERENCE_V5 -->
 
 <script src="/assets/lifeos_pwa_v1.js?v=2.0.6" defer></script>
+<!-- LIFEOS_PASSWORD_VISIBILITY_V1:SCRIPT_START -->
+<script>
+(() => {
+  "use strict";
+  const selector = 'button[data-lifeos-password-toggle="v1"]';
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest(selector);
+    if (!(button instanceof HTMLButtonElement)) return;
+    const inputId = button.dataset.lifeosPasswordTarget || "";
+    const input = inputId ? document.getElementById(inputId) : null;
+    if (!(input instanceof HTMLInputElement)) return;
+    if (input.dataset.lifeosPasswordInput !== "v1") return;
+    const reveal = input.type === "password";
+    if (!reveal && input.type !== "text") return;
+    input.type = reveal ? "text" : "password";
+    button.setAttribute("aria-pressed", reveal ? "true" : "false");
+    button.setAttribute("aria-label", reveal ? "Hide password" : "Show password");
+  });
+})();
+</script>
+<!-- LIFEOS_PASSWORD_VISIBILITY_V1:SCRIPT_END -->
 </body>
 </html>

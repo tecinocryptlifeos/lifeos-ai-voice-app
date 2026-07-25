@@ -851,6 +851,73 @@
 <link rel="icon" href="/icons/lifeos-icon-192.png" type="image/png">
 <link rel="shortcut icon" href="/icons/lifeos-icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="/icons/lifeos-icon-192.png">
+<!-- LIFEOS_MOBILE_BRANDING_MENU_V1:START -->
+<style>
+@media (max-width: 980px) {
+  div.header-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+  }
+  button.menu-toggle {
+    display: block !important;
+    order: -100 !important;
+    flex: 0 0 auto !important;
+    position: static !important;
+    margin-inline: 0 0.75rem !important;
+    align-self: flex-start !important;
+    left: auto !important;
+    right: auto !important;
+  }
+  a.brand {
+    order: -90 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    align-items: flex-start !important;
+  }
+  span.brand-copy {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    min-width: 0 !important;
+  }
+  strong.brand-name {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    order: 1 !important;
+  }
+  span.brand-expansion {
+    display: grid !important;
+    grid-template-columns: repeat(3, max-content) !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 0.35rem !important;
+    row-gap: 0.15rem !important;
+    justify-items: center !important;
+    align-items: center !important;
+    width: auto !important;
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    order: 2 !important;
+  }
+  .brand-word {
+    display: inline !important;
+    grid-row: 1 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  .brand-letter {
+    display: inline !important;
+    grid-row: 2 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+}
+</style>
+<!-- LIFEOS_MOBILE_BRANDING_MENU_V1:END -->
 </head>
 <body>
 <!-- LIFEOS_HOMEPAGE_RECONSTRUCTION_APPROVED_V1 -->
@@ -900,6 +967,9 @@
             <p class="hero-lead">LifeOS helps you clarify a decision, examine responsibilities, compare risks and consequences, and identify practical next actions before you act.</p>
             <div class="hero-actions">
               <a class="button button-primary" href="/chat">Start Decision Chat</a>
+              <!-- LIFEOS_HOMEPAGE_VOICE_CTA_V1:START -->
+              <a class="button button-primary" href="/voice">Start Voice Conversation</a>
+              <!-- LIFEOS_HOMEPAGE_VOICE_CTA_V1:END -->
               <a class="button button-secondary" href="/projects">Explore Future Projects</a>
             </div>
           </div>

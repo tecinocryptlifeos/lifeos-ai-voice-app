@@ -906,6 +906,66 @@ textarea{
 </style>
   <!-- LIFEOS_ACCOUNT_LAYOUT_FIX_V1 -->
   <link rel="stylesheet" href="/assets/lifeos_account_layout_fix_v1.css?v=1.0.0">
+<!-- LIFEOS_PASSWORD_VISIBILITY_V1:STYLE_START -->
+<style>
+.lifeos-password-field {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.lifeos-password-field > input,
+.lifeos-password-field > .lifeos-password-toggle {
+  grid-area: 1 / 1 !important;
+}
+.lifeos-password-field > input {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding-inline-end: 3.25rem !important;
+}
+.lifeos-password-toggle {
+  appearance: none !important;
+  width: 2.75rem !important;
+  min-width: 2.75rem !important;
+  max-width: 2.75rem !important;
+  min-height: 2.5rem !important;
+  margin: 0 0.25rem 0 0 !important;
+  padding: 0 !important;
+  align-self: center !important;
+  justify-self: end !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 0.65rem !important;
+  color: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  z-index: 2 !important;
+}
+.lifeos-password-toggle:hover { background: rgba(255,255,255,.08) !important; }
+.lifeos-password-toggle:focus-visible {
+  outline: 2px solid currentColor !important;
+  outline-offset: 2px !important;
+}
+.lifeos-password-toggle__icon {
+  position: relative !important;
+  display: inline-block !important;
+  line-height: 1 !important;
+  font-size: 1.15rem !important;
+}
+.lifeos-password-toggle[aria-pressed="true"] .lifeos-password-toggle__icon::after {
+  content: "";
+  position: absolute;
+  left: -0.12em;
+  right: -0.12em;
+  top: 50%;
+  border-top: 0.13em solid currentColor;
+  transform: rotate(-45deg);
+  transform-origin: center;
+}
+</style>
+<!-- LIFEOS_PASSWORD_VISIBILITY_V1:STYLE_END -->
 </head>
 <body>
   <section id="authGate" class="chat-auth-gate" data-lifeos-auth-gate aria-labelledby="authTitle">
@@ -917,7 +977,12 @@ textarea{
     </div>
     <div id="authSignInPanel" data-lifeos-email-auth>
       <input id="authEmail" class="chat-auth-input" type="email" autocomplete="email" placeholder="Email address">
-      <input id="authPassword" class="chat-auth-input" type="password" autocomplete="current-password" placeholder="Password">
+      <!-- LIFEOS_PASSWORD_VISIBILITY_V1:CONTROL_START -->
+      <span class="lifeos-password-field" data-lifeos-password-field="v1">
+        <input id="authPassword" class="chat-auth-input" type="password" autocomplete="current-password" placeholder="Password" data-lifeos-password-input="v1">
+        <button type="button" class="lifeos-password-toggle" data-lifeos-password-toggle="v1" data-lifeos-password-target="authPassword" aria-controls="authPassword" aria-label="Show password" aria-pressed="false"><span class="lifeos-password-toggle__icon" aria-hidden="true">&#128065;</span></button>
+      </span>
+      <!-- LIFEOS_PASSWORD_VISIBILITY_V1:CONTROL_END -->
       <div class="chat-auth-actions">
         <button id="emailPasswordSignIn" type="button">Sign in with email</button>
         <button id="forgotPassword" class="secondary" type="button">Forgot password</button>
@@ -930,7 +995,12 @@ textarea{
       <input id="authCountry" class="chat-auth-input" type="text" autocomplete="country-name" placeholder="Country" required>
       <input id="authPhone" class="chat-auth-input" type="tel" autocomplete="tel" placeholder="Phone number (optional)">
       <input id="authSignupEmail" class="chat-auth-input" type="email" autocomplete="email" placeholder="Email address" required>
-      <input id="authSignupPassword" class="chat-auth-input" type="password" autocomplete="new-password" placeholder="Password (10+ characters, letter and number)" required>
+      <!-- LIFEOS_PASSWORD_VISIBILITY_V1:CONTROL_START -->
+      <span class="lifeos-password-field" data-lifeos-password-field="v1">
+        <input id="authSignupPassword" class="chat-auth-input" type="password" autocomplete="new-password" placeholder="Password (10+ characters, letter and number)" required data-lifeos-password-input="v1">
+        <button type="button" class="lifeos-password-toggle" data-lifeos-password-toggle="v1" data-lifeos-password-target="authSignupPassword" aria-controls="authSignupPassword" aria-label="Show password" aria-pressed="false"><span class="lifeos-password-toggle__icon" aria-hidden="true">&#128065;</span></button>
+      </span>
+      <!-- LIFEOS_PASSWORD_VISIBILITY_V1:CONTROL_END -->
       <label class="lifeos-auth-consent"><input id="authAcceptTerms" type="checkbox"> I confirm that I am at least 13 and accept the <a href="/terms" target="_blank" rel="noopener">Terms</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</label>
       <button id="emailSignUp" type="button">Create LifeOS account</button>
     </div>
@@ -3493,5 +3563,28 @@ html body #chatApp .msg.lifeos-revealing::after{content:"";display:inline-block;
 <!-- LOSAI_ACCOUNT_RUNTIME_BRIDGE_V2_1_1 -->
 <script src="/assets/lifeos_pwa_v1.js?v=2.0.6" defer></script>
   <script src="/assets/lifeos_account_layout_fix_v1.js?v=1.0.0" defer></script>
+<!-- LIFEOS_PASSWORD_VISIBILITY_V1:SCRIPT_START -->
+<script>
+(() => {
+  "use strict";
+  const selector = 'button[data-lifeos-password-toggle="v1"]';
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest(selector);
+    if (!(button instanceof HTMLButtonElement)) return;
+    const inputId = button.dataset.lifeosPasswordTarget || "";
+    const input = inputId ? document.getElementById(inputId) : null;
+    if (!(input instanceof HTMLInputElement)) return;
+    if (input.dataset.lifeosPasswordInput !== "v1") return;
+    const reveal = input.type === "password";
+    if (!reveal && input.type !== "text") return;
+    input.type = reveal ? "text" : "password";
+    button.setAttribute("aria-pressed", reveal ? "true" : "false");
+    button.setAttribute("aria-label", reveal ? "Hide password" : "Show password");
+  });
+})();
+</script>
+<!-- LIFEOS_PASSWORD_VISIBILITY_V1:SCRIPT_END -->
 </body>
 </html>
