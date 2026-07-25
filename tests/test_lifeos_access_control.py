@@ -473,7 +473,7 @@ class InterfaceContractTests(unittest.TestCase):
         controller = (ROOT / "web/lifeos_voice/assets/gemini_live_v1.js").read_text(encoding="utf-8")
         voice_page = (ROOT / "web/lifeos_voice/gemini_live.html").read_text(encoding="utf-8")
         self.assertIn("tools:[{googleSearch:{}}]", controller)
-        self.assertIn('thinkingConfig:{thinkingLevel:"medium"}', controller)
+        self.assertIn('thinkingConfig:{thinkingLevel:payload.thinking_level||"medium"}', controller)
         self.assertIn("ACCURACY AND LIVE INTERNET POLICY", controller)
         self.assertIn("REASONING AND FORESIGHT POLICY", controller)
         self.assertIn("Never claim access to private accounts", controller)
@@ -510,7 +510,7 @@ class InterfaceContractTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("GoAway renewal simulation passed", result.stdout)
+        self.assertIn("Gemini Live primary, renewal and capacity fallback simulation passed", result.stdout)
 
     def test_voice_connection_cue_is_audible_and_status_is_explicit(self):
         controller = (ROOT / "web/lifeos_voice/assets/gemini_live_v1.js").read_text(encoding="utf-8")
