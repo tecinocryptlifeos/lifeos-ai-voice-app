@@ -209,6 +209,107 @@ class AuthAnalyticsTests(unittest.TestCase):
         self.assertEqual(insight["route"], "/voice")
 
 
+    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V1_TEST_START
+    def test_profile_update_persists_existing_or_missing_profile_row(self):
+        user_id = "00000000-0000-4000-8000-000000000031"
+        user = {
+            "id": user_id,
+            "email": "Owner@Example.com",
+            "user_metadata": {},
+        }
+        payload = {
+            "first_name": "Test",
+            "surname": "Owner",
+            "date_of_birth": "2000-03-17",
+            "country": "Nigeria",
+            "phone": "08000000000",
+            "accept_terms": True,
+        }
+
+        for existing_row in (True, False):
+            with self.subTest(existing_row=existing_row):
+                calls = []
+                stored = {}
+
+                def fake_rest(
+                    table,
+                    method="GET",
+                    query="",
+                    payload=None,
+                    prefer="return=minimal",
+                ):
+                    calls.append({
+                        "table": table,
+                        "method": method,
+                        "query": query,
+                        "payload": payload,
+                        "prefer": prefer,
+                    })
+                    self.assertEqual(table, "lifeos_profiles")
+                    if method == "PATCH":
+                        self.assertEqual(query, "user_id=eq." + user_id)
+                        if not existing_row:
+                            return 200, []
+                        stored.update({"user_id": user_id, **(payload or {})})
+                        return 200, [dict(stored)]
+                    if method == "POST":
+                        stored.update(payload or {})
+                        return 201, [dict(stored)]
+                    if method == "GET":
+                        return 200, [dict(stored)]
+                    self.fail("Unexpected REST method: " + method)
+
+                updated_user = {
+                    **user,
+                    "email": "owner@example.com",
+                    "user_metadata": {
+                        "first_name": "Test",
+                        "surname": "Owner",
+                    },
+                }
+                with mock.patch.dict(
+                    os.environ,
+                    {"LIFEOS_MINIMUM_AGE": "13"},
+                    clear=True,
+                ), mock.patch.object(
+                    auth,
+                    "_auth_admin_request",
+                    return_value=(200, updated_user),
+                ), mock.patch.object(
+                    auth,
+                    "_rest",
+                    side_effect=fake_rest,
+                ):
+                    result = auth.update_account_profile(user, payload)
+
+                self.assertTrue(result["complete"])
+                self.assertEqual(stored["user_id"], user_id)
+                self.assertEqual(stored["email"], "owner@example.com")
+                self.assertEqual(stored["display_name"], "Test Owner")
+                self.assertEqual(stored["first_name"], "Test")
+                self.assertEqual(stored["surname"], "Owner")
+                self.assertEqual(stored["date_of_birth"], "2000-03-17")
+                self.assertEqual(stored["country"], "Nigeria")
+                self.assertEqual(stored["phone"], "08000000000")
+                self.assertTrue(stored["terms_accepted_at"])
+                self.assertNotIn("password", json.dumps(calls).lower())
+
+                methods = [call["method"] for call in calls]
+                self.assertEqual(methods[0], "PATCH")
+                self.assertIn("GET", methods)
+                if existing_row:
+                    self.assertNotIn("POST", methods)
+                else:
+                    self.assertIn("POST", methods)
+                for call in calls:
+                    if call["method"] in {"PATCH", "POST"}:
+                        self.assertEqual(
+                            call["prefer"],
+                            "return=representation",
+                        )
+    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V1_TEST_END
+
+
 class ProtectedRouteTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

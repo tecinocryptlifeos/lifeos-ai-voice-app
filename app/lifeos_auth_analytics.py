@@ -307,6 +307,64 @@ def update_account_profile(user, payload):
     )
     if status != 200 or not isinstance(updated, dict):
         raise RuntimeError("The LifeOS account profile could not be updated")
+
+    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V1_START
+    user_id = _user_id(user.get("id"))
+    updated_user_id = _user_id(updated.get("id"))
+    if updated_user_id != user_id:
+        raise RuntimeError("The LifeOS account profile update returned the wrong user")
+
+    email = _clean_profile_text(
+        updated.get("email") or user.get("email"),
+        320,
+    ).lower()
+    if not email:
+        raise RuntimeError("The LifeOS account email is unavailable")
+
+    profile_values = {
+        "email": email,
+        "display_name": values["full_name"],
+        "first_name": values["first_name"],
+        "surname": values["surname"],
+        "date_of_birth": values["date_of_birth"],
+        "country": values["country"],
+        "phone": values["phone"],
+        "terms_accepted_at": values["terms_accepted_at"],
+    }
+    profile_query = urllib.parse.urlencode({
+        "user_id": "eq." + user_id,
+    })
+    profile_status, saved_rows = _rest(
+        "lifeos_profiles",
+        method="PATCH",
+        query=profile_query,
+        payload=profile_values,
+        prefer="return=representation",
+    )
+    if profile_status != 200 or not isinstance(saved_rows, list):
+        raise RuntimeError("The LifeOS account profile could not be saved")
+    if len(saved_rows) > 1:
+        raise RuntimeError("Multiple LifeOS profile rows exist for this account")
+
+    if not saved_rows:
+        insert_values = {
+            "user_id": user_id,
+            **profile_values,
+        }
+        profile_status, saved_rows = _rest(
+            "lifeos_profiles",
+            method="POST",
+            payload=insert_values,
+            prefer="return=representation",
+        )
+        if (
+            profile_status not in {200, 201}
+            or not isinstance(saved_rows, list)
+            or len(saved_rows) != 1
+        ):
+            raise RuntimeError("The LifeOS account profile could not be created")
+    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V1_END
+
     result = account_profile(updated)
     if not result.get("complete"):
         raise RuntimeError("The LifeOS account profile remains incomplete")

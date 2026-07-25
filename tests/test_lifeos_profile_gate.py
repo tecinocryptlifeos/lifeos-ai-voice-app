@@ -56,6 +56,8 @@ class ProfileValidationTests(unittest.TestCase):
             with self.subTest(field=field):
                 self.assertFalse(auth._profile_complete(incomplete))
 
+
+    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V2_LEGACY_TEST_START
     def test_profile_update_changes_user_metadata_then_reloads_profile(self):
         updated_user = dict(USER)
         updated_user["user_metadata"] = {
@@ -66,9 +68,40 @@ class ProfileValidationTests(unittest.TestCase):
             "country": "Nigeria",
             "terms_accepted_at": "2026-07-17T00:00:00+00:00",
         }
-        complete_result = {"ok": True, "complete": True, "profile": updated_user["user_metadata"]}
-        with mock.patch.object(auth, "_auth_admin_request", return_value=(200, updated_user)) as request, \
-                mock.patch.object(auth, "account_profile", return_value=complete_result):
+        complete_result = {
+            "ok": True,
+            "complete": True,
+            "profile": updated_user["user_metadata"],
+        }
+        persisted = {}
+
+        def fake_rest(
+            table,
+            method="GET",
+            query="",
+            payload=None,
+            prefer="return=minimal",
+        ):
+            self.assertEqual(table, "lifeos_profiles")
+            self.assertEqual(method, "PATCH")
+            self.assertEqual(query, "user_id=eq." + USER["id"])
+            self.assertEqual(prefer, "return=representation")
+            persisted.update(payload or {})
+            return 200, [{"user_id": USER["id"], **persisted}]
+
+        with mock.patch.object(
+            auth,
+            "_auth_admin_request",
+            return_value=(200, updated_user),
+        ) as request, mock.patch.object(
+            auth,
+            "_rest",
+            side_effect=fake_rest,
+        ), mock.patch.object(
+            auth,
+            "account_profile",
+            return_value=complete_result,
+        ) as reload_profile:
             result = auth.update_account_profile(USER, {
                 "first_name": "Ada",
                 "surname": "Okafor",
@@ -77,10 +110,19 @@ class ProfileValidationTests(unittest.TestCase):
                 "phone": "",
                 "accept_terms": True,
             })
+
         self.assertTrue(result["complete"])
         payload = request.call_args.kwargs["payload"]["user_metadata"]
         self.assertEqual(payload["full_name"], "Ada Okafor")
         self.assertTrue(payload["minimum_age_confirmed"])
+        self.assertEqual(persisted["display_name"], "Ada Okafor")
+        self.assertEqual(persisted["first_name"], "Ada")
+        self.assertEqual(persisted["surname"], "Okafor")
+        self.assertEqual(persisted["date_of_birth"], "1990-05-10")
+        self.assertEqual(persisted["country"], "Nigeria")
+        self.assertIsNone(persisted["phone"])
+        reload_profile.assert_called_once_with(updated_user)
+    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V2_LEGACY_TEST_END
 
 
 class ProfileRouteTests(unittest.TestCase):
