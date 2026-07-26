@@ -676,15 +676,17 @@ def admin_dashboard(user):
         query=urllib.parse.urlencode({"select":"id,user_id,user_email,event_type,session_id,error_code,error_message,device_type,browser,metadata,created_at", "order":"created_at.desc", "limit":"250"}),
         prefer="count=exact",
     )
-    if status != 200:
-        raise RuntimeError("Could not load analytics: " + str(events)[:400])
+    # LIFEOS_ADMIN_PARTIAL_CONTENT_V1_START
+    if status not in {200, 206} or not isinstance(events, list):
+        raise RuntimeError("Could not load analytics")
     status2, profiles = _rest(
         "lifeos_profiles",
         query=urllib.parse.urlencode({"select":"user_id,email,display_name,first_name,surname,date_of_birth,country,phone,terms_accepted_at,created_at,last_sign_in_at,account_status", "order":"last_sign_in_at.desc.nullslast", "limit":"250"}),
         prefer="count=exact",
     )
-    if status2 != 200:
-        raise RuntimeError("Could not load users: " + str(profiles)[:400])
+    if status2 not in {200, 206} or not isinstance(profiles, list):
+        raise RuntimeError("Could not load users")
+    # LIFEOS_ADMIN_PARTIAL_CONTENT_V1_END
     now = datetime.now(timezone.utc)
     today = now.date().isoformat()
     signed = [e for e in events if e.get("event_type") == "sign_in"]

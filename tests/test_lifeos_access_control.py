@@ -133,6 +133,80 @@ class AuthAnalyticsTests(unittest.TestCase):
             self.assertFalse(auth.is_admin(disabled))
     # LIFEOS_OWNER_BINDING_V1_TEST_END
 
+    # LIFEOS_ADMIN_PARTIAL_CONTENT_V1_TEST_START
+    def test_admin_dashboard_accepts_postgrest_partial_content(self):
+        owner = {
+            "id": "00000000-0000-4000-8000-000000000099",
+            "email": "owner@example.com",
+        }
+        events = [{
+            "id": "event-1",
+            "user_id": owner["id"],
+            "user_email": owner["email"],
+            "event_type": "page_view",
+            "created_at": "2026-07-26T00:00:00+00:00",
+            "metadata": {"route": "/admin"},
+        }]
+        profiles = [{
+            "user_id": owner["id"],
+            "email": owner["email"],
+            "account_status": "active",
+        }]
+
+        with mock.patch.dict(
+            os.environ,
+            {"LIFEOS_ADMIN_EMAILS": owner["email"]},
+            clear=True,
+        ), mock.patch.object(
+            auth,
+            "_rest",
+            side_effect=[
+                (206, events),
+                (206, profiles),
+            ],
+        ), mock.patch.object(
+            auth,
+            "_auth_users",
+            return_value=[],
+        ):
+            result = auth.admin_dashboard(owner)
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["events"], events)
+        self.assertEqual(result["users"][0]["email"], owner["email"])
+        self.assertEqual(result["metrics"]["registered_users"], 1)
+
+    def test_admin_dashboard_load_error_does_not_expose_rows(self):
+        owner = {
+            "id": "00000000-0000-4000-8000-000000000099",
+            "email": "owner@example.com",
+        }
+        sensitive_rows = [{
+            "user_email": "private@example.com",
+            "metadata": {"route": "/admin"},
+        }]
+
+        with mock.patch.dict(
+            os.environ,
+            {"LIFEOS_ADMIN_EMAILS": owner["email"]},
+            clear=True,
+        ), mock.patch.object(
+            auth,
+            "_rest",
+            return_value=(500, sensitive_rows),
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                r"^Could not load analytics$",
+            ) as raised:
+                auth.admin_dashboard(owner)
+
+        self.assertNotIn(
+            "private@example.com",
+            str(raised.exception),
+        )
+    # LIFEOS_ADMIN_PARTIAL_CONTENT_V1_TEST_END
+
     def test_new_secret_key_is_not_sent_as_a_bearer_jwt(self):
         captured = {}
 
