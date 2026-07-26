@@ -57,72 +57,76 @@ class ProfileValidationTests(unittest.TestCase):
                 self.assertFalse(auth._profile_complete(incomplete))
 
 
-    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V2_LEGACY_TEST_START
-    def test_profile_update_changes_user_metadata_then_reloads_profile(self):
-        updated_user = dict(USER)
-        updated_user["user_metadata"] = {
+
+    # LIFEOS_PROFILE_ACCESS_CERTIFIED_V4_PROFILE_TEST_START
+    def test_profile_complete_accepts_eligibility_only_retention(self):
+        profile = {
             "first_name": "Ada",
             "surname": "Okafor",
-            "full_name": "Ada Okafor",
-            "date_of_birth": "1990-05-10",
+            "date_of_birth": None,
             "country": "Nigeria",
             "terms_accepted_at": "2026-07-17T00:00:00+00:00",
+            "birth_year": 1990,
+            "age_verified_at": "2026-07-17T00:00:00+00:00",
+            "dob_retention": "eligibility_only",
         }
-        complete_result = {
-            "ok": True,
-            "complete": True,
-            "profile": updated_user["user_metadata"],
-        }
+        self.assertTrue(auth._profile_complete(profile))
+        profile["age_verified_at"] = None
+        self.assertFalse(auth._profile_complete(profile))
+
+    def test_profile_update_removes_full_dob_and_uses_user_token(self):
+        updated = dict(USER)
         persisted = {}
 
-        def fake_rest(
+        def fake_user_rest(
+            token,
             table,
             method="GET",
             query="",
             payload=None,
             prefer="return=minimal",
         ):
+            self.assertEqual(token, "verified-user-jwt")
             self.assertEqual(table, "lifeos_profiles")
-            self.assertEqual(method, "PATCH")
-            self.assertEqual(query, "user_id=eq." + USER["id"])
-            self.assertEqual(prefer, "return=representation")
-            persisted.update(payload or {})
-            return 200, [{"user_id": USER["id"], **persisted}]
+            if method == "PATCH":
+                persisted.update({"user_id": USER["id"], **(payload or {})})
+                return 200, [dict(persisted)]
+            if method == "GET":
+                return 200, [dict(persisted)]
+            self.fail("Unexpected REST method: " + method)
 
         with mock.patch.object(
             auth,
             "_auth_admin_request",
-            return_value=(200, updated_user),
+            return_value=(200, updated),
         ) as request, mock.patch.object(
             auth,
-            "_rest",
-            side_effect=fake_rest,
-        ), mock.patch.object(
-            auth,
-            "account_profile",
-            return_value=complete_result,
-        ) as reload_profile:
-            result = auth.update_account_profile(USER, {
-                "first_name": "Ada",
-                "surname": "Okafor",
-                "date_of_birth": "1990-05-10",
-                "country": "Nigeria",
-                "phone": "",
-                "accept_terms": True,
-            })
+            "_rest_as_user",
+            side_effect=fake_user_rest,
+        ):
+            result = auth.update_account_profile(
+                USER,
+                {
+                    "first_name": "Ada",
+                    "surname": "Okafor",
+                    "date_of_birth": "1990-05-10",
+                    "country": "Nigeria",
+                    "phone": "",
+                    "accept_terms": True,
+                },
+                "verified-user-jwt",
+            )
 
         self.assertTrue(result["complete"])
-        payload = request.call_args.kwargs["payload"]["user_metadata"]
-        self.assertEqual(payload["full_name"], "Ada Okafor")
-        self.assertTrue(payload["minimum_age_confirmed"])
-        self.assertEqual(persisted["display_name"], "Ada Okafor")
-        self.assertEqual(persisted["first_name"], "Ada")
-        self.assertEqual(persisted["surname"], "Okafor")
-        self.assertEqual(persisted["date_of_birth"], "1990-05-10")
-        self.assertEqual(persisted["country"], "Nigeria")
-        self.assertIsNone(persisted["phone"])
-        reload_profile.assert_called_once_with(updated_user)
-    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V2_LEGACY_TEST_END
+        metadata = request.call_args.kwargs["payload"]["user_metadata"]
+        self.assertNotIn("date_of_birth", metadata)
+        self.assertEqual(metadata["birth_year"], 1990)
+        self.assertTrue(metadata["age_verified_at"])
+        self.assertEqual(metadata["dob_retention"], "eligibility_only")
+        self.assertIsNone(persisted["date_of_birth"])
+        self.assertEqual(persisted["birth_year"], 1990)
+    # LIFEOS_PROFILE_ACCESS_CERTIFIED_V4_PROFILE_TEST_END
+
 
 
 class ProfileRouteTests(unittest.TestCase):

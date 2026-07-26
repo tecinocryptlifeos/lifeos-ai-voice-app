@@ -146,6 +146,35 @@ def _rest(table, method="GET", query="", payload=None, prefer="return=minimal"):
     return _request(url, method=method, headers=headers, payload=payload)
 
 
+# LIFEOS_PROFILE_ACCESS_CERTIFIED_V4_START
+def _rest_as_user(
+    token,
+    table,
+    method="GET",
+    query="",
+    payload=None,
+    prefer="return=minimal",
+):
+    # Use a Supabase-verified user JWT so profile RLS remains enforced.
+    access_token = str(token or "").strip()
+    if not access_token:
+        raise PermissionError("The verified LifeOS session token is unavailable")
+    url = _env("SUPABASE_URL").rstrip("/") + "/rest/v1/" + table
+    if query:
+        url += "?" + query
+    return _request(
+        url,
+        method=method,
+        headers={
+            "apikey": _public_key(),
+            "Authorization": "Bearer " + access_token,
+            "Prefer": prefer,
+        },
+        payload=payload,
+    )
+# LIFEOS_PROFILE_ACCESS_CERTIFIED_V4_END
+
+
 def _auth_admin_request(path, method="GET", payload=None):
     """Call Supabase Auth Admin from the server; the secret never reaches a browser."""
     key = _server_key()
@@ -182,7 +211,7 @@ def _auth_users():
     return data if isinstance(data, list) else []
 
 
-PROFILE_REQUIRED_FIELDS = ("first_name", "surname", "date_of_birth", "country")
+PROFILE_REQUIRED_FIELDS = ("first_name", "surname", "country")
 
 
 def _clean_profile_text(value, maximum=160):
@@ -243,39 +272,75 @@ def _profile_payload(payload):
 def _profile_complete(profile):
     if not isinstance(profile, dict):
         return False
-    if any(not str(profile.get(field) or "").strip() for field in PROFILE_REQUIRED_FIELDS):
+    if any(
+        not str(profile.get(field) or "").strip()
+        for field in PROFILE_REQUIRED_FIELDS
+    ):
         return False
     if not profile.get("terms_accepted_at"):
         return False
+
+    minimum_age = _integer_setting(
+        "LIFEOS_MINIMUM_AGE",
+        13,
+        13,
+        18,
+    )
+    full_date = str(profile.get("date_of_birth") or "").strip()
+    if full_date:
+        try:
+            birth = _birth_date(full_date)
+        except ValueError:
+            return False
+        return _age_on(birth) >= minimum_age
+
     try:
-        birth = _birth_date(profile.get("date_of_birth"))
-    except ValueError:
+        birth_year = int(profile.get("birth_year"))
+    except (TypeError, ValueError):
         return False
-    return _age_on(birth) >= _integer_setting("LIFEOS_MINIMUM_AGE", 13, 13, 18)
+    current_year = date.today().year
+    if birth_year < 1900 or birth_year > current_year:
+        return False
+    if current_year - birth_year < minimum_age:
+        return False
+    if not profile.get("age_verified_at"):
+        return False
+    return profile.get("dob_retention") == "eligibility_only"
 
 
-def account_profile(user):
+def account_profile(user, token):
     user_id = _user_id(user.get("id"))
-    status, rows = _rest(
+    status, rows = _rest_as_user(
+        token,
         "lifeos_profiles",
         query=urllib.parse.urlencode({
-            "select": "user_id,email,display_name,first_name,surname,date_of_birth,country,phone,terms_accepted_at,created_at,last_sign_in_at,account_status",
+            "select": (
+                "user_id,email,display_name,first_name,surname,"
+                "date_of_birth,country,phone,terms_accepted_at,"
+                "birth_year,age_verified_at,dob_retention,"
+                "created_at,last_sign_in_at,account_status"
+            ),
             "user_id": "eq." + user_id,
             "limit": "1",
         }),
     )
     if status != 200 or not isinstance(rows, list):
         raise RuntimeError("The LifeOS account profile could not be loaded")
+
+    metadata = user.get("user_metadata") or {}
     profile = rows[0] if rows else {
         "user_id": user_id,
         "email": user.get("email"),
-        "display_name": (user.get("user_metadata") or {}).get("full_name") or "",
-        "first_name": (user.get("user_metadata") or {}).get("first_name") or "",
-        "surname": (user.get("user_metadata") or {}).get("surname") or "",
-        "date_of_birth": (user.get("user_metadata") or {}).get("date_of_birth"),
-        "country": (user.get("user_metadata") or {}).get("country") or "",
-        "phone": (user.get("user_metadata") or {}).get("phone") or "",
-        "terms_accepted_at": (user.get("user_metadata") or {}).get("terms_accepted_at"),
+        "display_name": metadata.get("full_name") or "",
+        "first_name": metadata.get("first_name") or "",
+        "surname": metadata.get("surname") or "",
+        "date_of_birth": metadata.get("date_of_birth"),
+        "country": metadata.get("country") or "",
+        "phone": metadata.get("phone") or "",
+        "terms_accepted_at": metadata.get("terms_accepted_at"),
+        "birth_year": metadata.get("birth_year"),
+        "age_verified_at": metadata.get("age_verified_at"),
+        "dob_retention": metadata.get("dob_retention"),
     }
     safe_profile = {
         "email": profile.get("email") or user.get("email"),
@@ -286,20 +351,48 @@ def account_profile(user):
         "country": profile.get("country") or "",
         "phone": profile.get("phone") or "",
         "terms_accepted_at": profile.get("terms_accepted_at"),
+        "birth_year": profile.get("birth_year"),
+        "age_verified_at": profile.get("age_verified_at"),
+        "dob_retention": profile.get("dob_retention"),
     }
     return {
         "ok": True,
         "complete": _profile_complete(safe_profile),
-        "minimum_age": _integer_setting("LIFEOS_MINIMUM_AGE", 13, 13, 18),
+        "minimum_age": _integer_setting(
+            "LIFEOS_MINIMUM_AGE",
+            13,
+            13,
+            18,
+        ),
         "profile": safe_profile,
     }
 
 
-def update_account_profile(user, payload):
+def update_account_profile(user, payload, token):
     values = _profile_payload(payload)
+    birth = _birth_date(values["date_of_birth"])
+    verified_at = values["terms_accepted_at"]
+
     current_metadata = user.get("user_metadata")
-    metadata = dict(current_metadata) if isinstance(current_metadata, dict) else {}
-    metadata.update(values)
+    metadata = (
+        dict(current_metadata)
+        if isinstance(current_metadata, dict)
+        else {}
+    )
+    metadata.update({
+        "first_name": values["first_name"],
+        "surname": values["surname"],
+        "full_name": values["full_name"],
+        "country": values["country"],
+        "phone": values["phone"],
+        "terms_accepted_at": verified_at,
+        "minimum_age_confirmed": True,
+        "birth_year": birth.year,
+        "age_verified_at": verified_at,
+        "dob_retention": "eligibility_only",
+    })
+    metadata.pop("date_of_birth", None)
+
     status, updated = _auth_admin_request(
         "users/" + _user_id(user.get("id")),
         method="PUT",
@@ -308,12 +401,9 @@ def update_account_profile(user, payload):
     if status != 200 or not isinstance(updated, dict):
         raise RuntimeError("The LifeOS account profile could not be updated")
 
-    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V1_START
     user_id = _user_id(user.get("id"))
-    updated_user_id = _user_id(updated.get("id"))
-    if updated_user_id != user_id:
+    if _user_id(updated.get("id")) != user_id:
         raise RuntimeError("The LifeOS account profile update returned the wrong user")
-
     email = _clean_profile_text(
         updated.get("email") or user.get("email"),
         320,
@@ -326,15 +416,19 @@ def update_account_profile(user, payload):
         "display_name": values["full_name"],
         "first_name": values["first_name"],
         "surname": values["surname"],
-        "date_of_birth": values["date_of_birth"],
+        "date_of_birth": None,
         "country": values["country"],
         "phone": values["phone"],
-        "terms_accepted_at": values["terms_accepted_at"],
+        "terms_accepted_at": verified_at,
+        "birth_year": birth.year,
+        "age_verified_at": verified_at,
+        "dob_retention": "eligibility_only",
     }
     profile_query = urllib.parse.urlencode({
         "user_id": "eq." + user_id,
     })
-    profile_status, saved_rows = _rest(
+    profile_status, saved_rows = _rest_as_user(
+        token,
         "lifeos_profiles",
         method="PATCH",
         query=profile_query,
@@ -347,14 +441,11 @@ def update_account_profile(user, payload):
         raise RuntimeError("Multiple LifeOS profile rows exist for this account")
 
     if not saved_rows:
-        insert_values = {
-            "user_id": user_id,
-            **profile_values,
-        }
-        profile_status, saved_rows = _rest(
+        profile_status, saved_rows = _rest_as_user(
+            token,
             "lifeos_profiles",
             method="POST",
-            payload=insert_values,
+            payload={"user_id": user_id, **profile_values},
             prefer="return=representation",
         )
         if (
@@ -363,16 +454,15 @@ def update_account_profile(user, payload):
             or len(saved_rows) != 1
         ):
             raise RuntimeError("The LifeOS account profile could not be created")
-    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V1_END
 
-    result = account_profile(updated)
+    result = account_profile(updated, token)
     if not result.get("complete"):
         raise RuntimeError("The LifeOS account profile remains incomplete")
     return result
 
 
-def require_complete_profile(user):
-    result = account_profile(user)
+def require_complete_profile(user, token):
+    result = account_profile(user, token)
     if not result.get("complete"):
         raise PermissionError("Complete your LifeOS profile before using Sophia")
     return result

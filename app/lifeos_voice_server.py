@@ -618,11 +618,13 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
             {"X-Robots-Tag": "noindex, nofollow, noarchive"},
         )
 
+    # LIFEOS_PROFILE_ACCESS_CERTIFIED_V4_SERVER_START
     def _require_user(self, require_profile=True):
         try:
-            user, _ = verify_user(self.headers)
+            user, token = verify_user(self.headers)
+            self._lifeos_verified_access_token = token
             if require_profile:
-                require_complete_profile(user)
+                require_complete_profile(user, token)
             return user
         except PermissionError as error:
             message = str(error)
@@ -634,6 +636,7 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
         except Exception:
             self._send_json(503, {"ok": False, "error": "The authentication service is unavailable"})
         return None
+    # LIFEOS_PROFILE_ACCESS_CERTIFIED_V4_SERVER_END
 
     def _require_admin(self):
         user = self._require_user()
@@ -908,7 +911,7 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
             if not user:
                 return
             try:
-                self._send_json(200, account_profile(user))
+                self._send_json(200, account_profile(user, self._lifeos_verified_access_token))
             except Exception as error:
                 self._send_json(503, {"ok": False, "error": str(error)[:500]})
             return
@@ -943,7 +946,7 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
             if not user:
                 return
             try:
-                profile = account_profile(user)
+                profile = account_profile(user, self._lifeos_verified_access_token)
                 self._send_json(200, {
                     "ok": True,
                     "user_id": user.get("id"),
@@ -1524,7 +1527,7 @@ Core response rules:
                 if length < 1 or length > 12000:
                     raise ValueError("Invalid request body")
                 payload = json.loads(self.rfile.read(length).decode("utf-8"))
-                self._send_json(200, update_account_profile(user, payload))
+                self._send_json(200, update_account_profile(user, payload, self._lifeos_verified_access_token))
             except PermissionError as error:
                 self._send_json(403, {"ok": False, "error": str(error)})
             except (ValueError, json.JSONDecodeError) as error:

@@ -95,10 +95,14 @@ class AccountCompletionTests(unittest.TestCase):
         server = (ROOT / "app/lifeos_voice_server.py").read_text()
         auth = (ROOT / "app/lifeos_auth_analytics.py").read_text()
         controller = (ROOT / "web/lifeos_voice/assets/lifeos_auth_v1.js").read_text()
-        self.assertIn("require_complete_profile(user)", server)
+        # LIFEOS_PROFILE_ACCESS_CERTIFIED_V6_STATIC_TEST_START
+        self.assertIn("require_complete_profile(user, token)", server)
+        self.assertIn("account_profile(user, self._lifeos_verified_access_token)", server)
+        self.assertIn("update_account_profile(user, payload, self._lifeos_verified_access_token)", server)
         self.assertIn('path == "/api/account-profile"', server)
         self.assertIn("PROFILE_REQUIRED", server)
-        self.assertIn("def require_complete_profile(user):", auth)
+        self.assertIn("def require_complete_profile(user, token):", auth)
+        # LIFEOS_PROFILE_ACCESS_CERTIFIED_V6_STATIC_TEST_END
         self.assertIn('fetch("/api/account-profile"', controller)
         self.assertIn('data-lifeos-profile-completion', controller)
 

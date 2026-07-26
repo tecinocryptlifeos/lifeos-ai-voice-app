@@ -209,8 +209,47 @@ class AuthAnalyticsTests(unittest.TestCase):
         self.assertEqual(insight["route"], "/voice")
 
 
-    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V1_TEST_START
-    def test_profile_update_persists_existing_or_missing_profile_row(self):
+
+    # LIFEOS_PROFILE_ACCESS_CERTIFIED_V4_TEST_START
+    def test_profile_rest_uses_verified_user_jwt_and_public_key(self):
+        captured = {}
+
+        def fake_request(url, method="GET", headers=None, payload=None, timeout=15):
+            captured.update({
+                "url": url,
+                "method": method,
+                "headers": headers or {},
+                "payload": payload,
+            })
+            return 200, []
+
+        environment = {
+            "SUPABASE_URL": "https://example.supabase.co",
+            "SUPABASE_PUBLISHABLE_KEY": "publishable-test",
+            "SUPABASE_SECRET_KEY": "sb_secret_server-test",
+        }
+        with mock.patch.dict(os.environ, environment, clear=True), mock.patch.object(
+            auth,
+            "_request",
+            side_effect=fake_request,
+        ):
+            auth._rest_as_user(
+                "verified-user-jwt",
+                "lifeos_profiles",
+                method="PATCH",
+                query="user_id=eq.00000000-0000-4000-8000-000000000031",
+                payload={"first_name": "Test"},
+                prefer="return=representation",
+            )
+
+        self.assertEqual(captured["headers"]["apikey"], "publishable-test")
+        self.assertEqual(
+            captured["headers"]["Authorization"],
+            "Bearer verified-user-jwt",
+        )
+        self.assertNotIn("sb_secret_server-test", json.dumps(captured))
+
+    def test_profile_update_uses_user_rls_and_retains_only_age_evidence(self):
         user_id = "00000000-0000-4000-8000-000000000031"
         user = {
             "id": user_id,
@@ -231,7 +270,8 @@ class AuthAnalyticsTests(unittest.TestCase):
                 calls = []
                 stored = {}
 
-                def fake_rest(
+                def fake_user_rest(
+                    token,
                     table,
                     method="GET",
                     query="",
@@ -239,12 +279,14 @@ class AuthAnalyticsTests(unittest.TestCase):
                     prefer="return=minimal",
                 ):
                     calls.append({
+                        "token": token,
                         "table": table,
                         "method": method,
                         "query": query,
                         "payload": payload,
                         "prefer": prefer,
                     })
+                    self.assertEqual(token, "verified-user-jwt")
                     self.assertEqual(table, "lifeos_profiles")
                     if method == "PATCH":
                         self.assertEqual(query, "user_id=eq." + user_id)
@@ -259,13 +301,10 @@ class AuthAnalyticsTests(unittest.TestCase):
                         return 200, [dict(stored)]
                     self.fail("Unexpected REST method: " + method)
 
-                updated_user = {
-                    **user,
+                updated = {
+                    "id": user_id,
                     "email": "owner@example.com",
-                    "user_metadata": {
-                        "first_name": "Test",
-                        "surname": "Owner",
-                    },
+                    "user_metadata": {},
                 }
                 with mock.patch.dict(
                     os.environ,
@@ -274,26 +313,27 @@ class AuthAnalyticsTests(unittest.TestCase):
                 ), mock.patch.object(
                     auth,
                     "_auth_admin_request",
-                    return_value=(200, updated_user),
+                    return_value=(200, updated),
                 ), mock.patch.object(
                     auth,
-                    "_rest",
-                    side_effect=fake_rest,
+                    "_rest_as_user",
+                    side_effect=fake_user_rest,
                 ):
-                    result = auth.update_account_profile(user, payload)
+                    result = auth.update_account_profile(
+                        user,
+                        payload,
+                        "verified-user-jwt",
+                    )
 
                 self.assertTrue(result["complete"])
                 self.assertEqual(stored["user_id"], user_id)
                 self.assertEqual(stored["email"], "owner@example.com")
                 self.assertEqual(stored["display_name"], "Test Owner")
-                self.assertEqual(stored["first_name"], "Test")
-                self.assertEqual(stored["surname"], "Owner")
-                self.assertEqual(stored["date_of_birth"], "2000-03-17")
-                self.assertEqual(stored["country"], "Nigeria")
-                self.assertEqual(stored["phone"], "08000000000")
-                self.assertTrue(stored["terms_accepted_at"])
+                self.assertIsNone(stored["date_of_birth"])
+                self.assertEqual(stored["birth_year"], 2000)
+                self.assertTrue(stored["age_verified_at"])
+                self.assertEqual(stored["dob_retention"], "eligibility_only")
                 self.assertNotIn("password", json.dumps(calls).lower())
-
                 methods = [call["method"] for call in calls]
                 self.assertEqual(methods[0], "PATCH")
                 self.assertIn("GET", methods)
@@ -301,13 +341,8 @@ class AuthAnalyticsTests(unittest.TestCase):
                     self.assertNotIn("POST", methods)
                 else:
                     self.assertIn("POST", methods)
-                for call in calls:
-                    if call["method"] in {"PATCH", "POST"}:
-                        self.assertEqual(
-                            call["prefer"],
-                            "return=representation",
-                        )
-    # LIFEOS_PROFILE_COMPLETION_PERSISTENCE_V1_TEST_END
+    # LIFEOS_PROFILE_ACCESS_CERTIFIED_V4_TEST_END
+
 
 
 class ProtectedRouteTests(unittest.TestCase):
