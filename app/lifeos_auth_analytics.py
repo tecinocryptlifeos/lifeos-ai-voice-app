@@ -130,9 +130,37 @@ def verify_user(headers):
     return user, token
 
 
+# LIFEOS_OWNER_BINDING_V1_START
 def is_admin(user):
-    allowed = {item.strip().lower() for item in _env("LIFEOS_ADMIN_EMAILS").split(",") if item.strip()}
-    return bool(user.get("email") and user["email"].lower() in allowed)
+    email = str((user or {}).get("email") or "").strip().lower()
+    user_id = str((user or {}).get("id") or "").strip()
+
+    metadata = (user or {}).get("app_metadata")
+    metadata = metadata if isinstance(metadata, dict) else {}
+
+    owner_bound = (
+        metadata.get("lifeos_owner") is True
+        and bool(user_id)
+        and bool(email)
+        and str(
+            metadata.get("lifeos_owner_user_id") or ""
+        ).strip() == user_id
+        and str(
+            metadata.get("lifeos_owner_email") or ""
+        ).strip().lower() == email
+    )
+
+    if owner_bound:
+        return True
+
+    allowed = {
+        item.strip().lower()
+        for item in _env("LIFEOS_ADMIN_EMAILS").split(",")
+        if item.strip()
+    }
+
+    return bool(email and email in allowed)
+# LIFEOS_OWNER_BINDING_V1_END
 
 
 def _rest(table, method="GET", query="", payload=None, prefer="return=minimal"):

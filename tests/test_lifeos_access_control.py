@@ -96,6 +96,43 @@ class AuthAnalyticsTests(unittest.TestCase):
             self.assertTrue(auth.is_admin({"email": "owner@example.com"}))
             self.assertFalse(auth.is_admin({"email": "visitor@example.com"}))
 
+    # LIFEOS_OWNER_BINDING_V1_TEST_START
+    def test_admin_owner_binding_requires_exact_user_id_and_email(self):
+        owner = {
+            "id": "00000000-0000-4000-8000-000000000099",
+            "email": "owner@example.com",
+            "app_metadata": {
+                "lifeos_owner": True,
+                "lifeos_owner_user_id": (
+                    "00000000-0000-4000-8000-000000000099"
+                ),
+                "lifeos_owner_email": "OWNER@example.com",
+            },
+        }
+
+        with mock.patch.dict(os.environ, {}, clear=True):
+            self.assertTrue(auth.is_admin(owner))
+
+            wrong_id = dict(owner)
+            wrong_id["id"] = (
+                "00000000-0000-4000-8000-000000000100"
+            )
+            self.assertFalse(auth.is_admin(wrong_id))
+
+            wrong_email = dict(owner)
+            wrong_email["email"] = "other@example.com"
+            self.assertFalse(auth.is_admin(wrong_email))
+
+            disabled = {
+                **owner,
+                "app_metadata": {
+                    **owner["app_metadata"],
+                    "lifeos_owner": False,
+                },
+            }
+            self.assertFalse(auth.is_admin(disabled))
+    # LIFEOS_OWNER_BINDING_V1_TEST_END
+
     def test_new_secret_key_is_not_sent_as_a_bearer_jwt(self):
         captured = {}
 
