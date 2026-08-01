@@ -1,0 +1,14 @@
+{
+  "name": "@lifeos/edge-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check src/index.js && node --check src/policy.js && node --check src/supabase.js && node --check src/gemini.js && node --check src/health.js",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.118.0"
+  }
+}

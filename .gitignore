@@ -42,3 +42,10 @@ test_voice.wav
 *.oga
 *.pcm
 *.wav
+
+# Split-platform generated output and local Cloudflare state
+dist/pages/
+services/edge-gateway/node_modules/
+services/edge-gateway/.wrangler/
+services/edge-gateway/.dev.vars
+infrastructure/cloudflare/wrangler.toml

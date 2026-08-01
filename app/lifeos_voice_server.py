@@ -3,6 +3,7 @@ import json
 import time
 import mimetypes
 import re
+import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -76,6 +77,45 @@ HOST = os.environ.get("LIFEOS_HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT") or os.environ.get("LIFEOS_PORT") or "8787")
 
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def split_gateway_required():
+    return os.environ.get("LIFEOS_GATEWAY_REQUIRED", "").strip().lower() in {
+        "1", "true", "yes", "on"
+    }
+
+
+def split_backend_ready():
+    if not split_gateway_required():
+        return True
+    return all((
+        os.environ.get("LIFEOS_GATEWAY_SHARED_SECRET", "").strip(),
+        os.environ.get("GEMINI_API_KEY", "").strip(),
+        os.environ.get("SUPABASE_URL", "").strip(),
+        (
+            os.environ.get("SUPABASE_PUBLISHABLE_KEY", "").strip()
+            or os.environ.get("SUPABASE_ANON_KEY", "").strip()
+        ),
+        (
+            os.environ.get("SUPABASE_SECRET_KEY", "").strip()
+            or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+        ),
+    ))
+
+
+def gateway_access(path, headers):
+    """Return the split-platform gateway decision without exposing the secret."""
+    if not split_gateway_required() or path == "/health":
+        return True, 200, ""
+    if path.startswith("/api/lifeos-queue/") and queue_internal_authorized(headers):
+        return True, 200, ""
+    expected = os.environ.get("LIFEOS_GATEWAY_SHARED_SECRET", "").strip()
+    if not expected:
+        return False, 503, "The backend gateway is not configured."
+    supplied = str(headers.get("X-LifeOS-Gateway-Secret") or "").strip()
+    if supplied and hmac.compare_digest(supplied, expected):
+        return True, 200, ""
+    return False, 403, "The Cloudflare API gateway is required."
 
 
 def public_site_origin():
@@ -592,6 +632,20 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
     def _path(self):
         return unquote(self.path.split("?", 1)[0])
 
+    def _enforce_gateway(self, path):
+        allowed, status, message = gateway_access(path, self.headers)
+        if allowed:
+            return True
+        self._send_json(
+            status,
+            {
+                "ok": False,
+                "code": "GATEWAY_REQUIRED" if status == 403 else "GATEWAY_NOT_CONFIGURED",
+                "error": message,
+            },
+        )
+        return False
+
     # LIFEOS_ARCHITECTURE_FINALIZER_V1_HEADERS
     def _send_bytes(self, status, body, content_type="text/plain; charset=utf-8", extra_headers=None):
         self.send_response(status)
@@ -715,6 +769,9 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self._path()
+
+        if not self._enforce_gateway(path):
+            return
 
         if self._legacy_host_redirected():
             return
@@ -975,6 +1032,18 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
                 )
             return
         if path == "/health":
+            if not split_backend_ready():
+                self._send_bytes(
+                    503,
+                    b"NOT READY",
+                    "text/plain; charset=utf-8",
+                    {
+                        **private_headers,
+                        "Cache-Control": "no-store",
+                        "X-LifeOS-Health": "split-backend-not-ready",
+                    },
+                )
+                return
             self._send_bytes(
                 200,
                 b"OK",
@@ -1489,6 +1558,9 @@ Core response rules:
 
     def do_POST(self):
         path = self._path()
+
+        if not self._enforce_gateway(path):
+            return
 
 
         if path == "/api/lifeos-queue/run":

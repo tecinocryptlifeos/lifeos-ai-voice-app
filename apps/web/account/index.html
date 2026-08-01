@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="canonical" href="https://losai.onrender.com/account">
+  <script src="/assets/lifeos_api_gateway_v1.js?v=1.0.0"></script>
+  <title>LifeOS Account</title>
+  <style>
+    :root{color-scheme:dark;--gold:#eabe53;--cream:#fff3cf;--muted:#c9bc98;--panel:#090b11ee}
+    *{box-sizing:border-box}body{min-height:100dvh;margin:0;padding:24px;background:radial-gradient(circle at 50% 10%,#352710,#05060a 58%);font-family:Inter,system-ui,sans-serif;color:var(--cream)}
+    a{color:var(--gold)}.shell{width:min(720px,100%);margin:auto}.panel{padding:clamp(20px,4vw,34px);border:1px solid #eabe5366;border-radius:24px;background:var(--panel);box-shadow:0 28px 90px #000a}.head,.actions,.tabs{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}h1,h2{color:var(--gold)}p,label{line-height:1.55;color:var(--muted)}input,button{width:100%;min-height:48px;margin-top:10px;padding:0 13px;border-radius:12px;font:inherit}input{border:1px solid #eabe5366;background:#0b0e14;color:#fff}button{border:1px solid #f0ce72;background:linear-gradient(#efc75e,#b87d1d);color:#171005;font-weight:850;cursor:pointer}.actions>*{flex:1}.tabs button{width:auto}.status{padding:7px 10px;border:1px solid #eabe5366;border-radius:999px;font-size:.78rem}[hidden]{display:none!important}#authMessage[data-kind="error"]{color:#ffabb3}#authMessage[data-kind="ok"]{color:#9ff0bb}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="actions"><a href="/">Home</a><a href="/chat">Chat</a><a href="/voice">Voice</a></nav>
+    <section class="panel" data-lifeos-auth-gate>
+      <div class="head"><h1>LifeOS Account</h1><span id="authStatusBadge" class="status">CHECKING</span></div>
+      <div class="tabs" data-lifeos-auth-tabs><button id="authTabSignIn" type="button">Sign in</button><button id="authTabSignUp" type="button">Create account</button></div>
+      <div id="authSignInPanel" data-lifeos-email-auth>
+        <input id="authEmail" type="email" autocomplete="email" placeholder="Email address">
+        <input id="authPassword" type="password" autocomplete="current-password" placeholder="Password">
+        <div class="actions"><button id="emailPasswordSignIn" type="button">Sign in</button><button id="forgotPassword" type="button">Forgot password</button></div>
+      </div>
+      <div id="authSignUpPanel" data-lifeos-registration hidden>
+        <input id="authFirstName" type="text" autocomplete="given-name" placeholder="First name">
+        <input id="authSurname" type="text" autocomplete="family-name" placeholder="Surname">
+        <label>Date of birth<input id="authDateOfBirth" type="date" autocomplete="bday"></label>
+        <input id="authCountry" type="text" autocomplete="country-name" placeholder="Country">
+        <input id="authPhone" type="tel" autocomplete="tel" placeholder="Phone number (optional)">
+        <input id="authSignupEmail" type="email" autocomplete="email" placeholder="Email address">
+        <input id="authSignupPassword" type="password" autocomplete="new-password" placeholder="Password">
+        <label><input id="authAcceptTerms" type="checkbox" style="width:auto;min-height:auto"> I am at least 13 and accept the <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</label>
+        <button id="emailSignUp" type="button">Create verified account</button>
+      </div>
+      <div data-lifeos-google-entry><button id="googleSignIn" type="button">Continue with Google</button></div>
+      <div data-lifeos-profile-completion hidden>
+        <h2>Complete your profile</h2>
+        <input id="profileFirstName" type="text" autocomplete="given-name" placeholder="First name">
+        <input id="profileSurname" type="text" autocomplete="family-name" placeholder="Surname">
+        <label>Date of birth<input id="profileDateOfBirth" type="date" autocomplete="bday"></label>
+        <input id="profileCountry" type="text" autocomplete="country-name" placeholder="Country">
+        <input id="profilePhone" type="tel" autocomplete="tel" placeholder="Phone number (optional)">
+        <label><input id="profileAcceptTerms" type="checkbox" style="width:auto;min-height:auto"> I accept the Terms and Privacy Policy.</label>
+        <div class="actions"><button id="saveProfile" type="button">Save profile</button><button id="profileSignOut" type="button">Sign out</button></div>
+      </div>
+      <p id="authMessage" role="status" aria-live="polite">Checking secure account access…</p>
+    </section>
+    <main class="panel" data-lifeos-protected hidden>
+      <div class="head"><div><h1>Account ready</h1><p id="userIdentity"></p></div><button id="signOut" type="button" style="width:auto">Sign out</button></div>
+      <p>Your verified LifeOS profile is active. Passwords remain with Supabase and are never shown to LifeOS administrators.</p>
+      <div class="actions"><a href="/chat">Open Chat</a><a href="/voice">Open Voice</a></div>
+    </main>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.3/dist/umd/supabase.js" integrity="sha384-sihuiVHG7vyEIuePVbLI4QpHu1dbhCZe4Zqp0FuqnFeEnyIhF3koyXoBZyfbFsYs" crossorigin="anonymous"></script>
+  <script src="/assets/lifeos_account_v1.js?v=2.1.0"></script>
+  <script src="/assets/lifeos_auth_v1.js?v=2.1.0"></script>
+</body>
+</html>
