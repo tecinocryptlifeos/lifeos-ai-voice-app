@@ -3,6 +3,7 @@ import { GatewayError, stableHash } from "./policy.js";
 export const GEMINI_WEBSOCKET_URL =
   "wss://generativelanguage.googleapis.com/ws/" +
   "google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained";
+export const TOKEN_IDEMPOTENCY_TTL_SECONDS = 60;
 
 function fetchImpl(env) {
   return typeof env.__TEST_FETCH__ === "function" ? env.__TEST_FETCH__ : fetch;
@@ -123,7 +124,9 @@ export async function issueGeminiToken(request, env, session, idempotencyKey) {
     idempotent_replay: false,
   };
   if (env.ORIGIN_STATE?.put) {
-    await env.ORIGIN_STATE.put(cacheKey, JSON.stringify(result), { expirationTtl: 55 });
+    await env.ORIGIN_STATE.put(cacheKey, JSON.stringify(result), {
+      expirationTtl: TOKEN_IDEMPOTENCY_TTL_SECONDS,
+    });
   }
   return result;
 }

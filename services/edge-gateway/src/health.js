@@ -97,11 +97,10 @@ export async function evaluateOrigins(env) {
     render,
     northflank,
   };
-  await env.ORIGIN_STATE.put(ORIGIN_STATE_KEY, JSON.stringify(state));
   if (previous?.preferred && previous.preferred !== preferred) {
     state.alert_sent = await sendChangeAlert(env, previous.preferred, preferred);
-    await env.ORIGIN_STATE.put(ORIGIN_STATE_KEY, JSON.stringify(state));
   }
+  await env.ORIGIN_STATE.put(ORIGIN_STATE_KEY, JSON.stringify(state));
   return state;
 }
 

@@ -14,6 +14,7 @@ const SUPABASE_ORIGIN = "https://project.supabase.co";
 class MemoryKV {
   constructor(initial = {}) {
     this.values = new Map(Object.entries(initial));
+    this.puts = [];
   }
 
   async get(key, options = {}) {
@@ -22,7 +23,11 @@ class MemoryKV {
     return options?.type === "json" ? JSON.parse(value) : value;
   }
 
-  async put(key, value) {
+  async put(key, value, options = {}) {
+    if (options.expirationTtl != null && options.expirationTtl < 60) {
+      throw new RangeError("Cloudflare KV expirationTtl must be at least 60 seconds");
+    }
+    this.puts.push({ key, options: { ...options } });
     this.values.set(key, String(value));
   }
 }
@@ -187,6 +192,9 @@ test("Gemini token issuance is authenticated, constrained, rate-limited and idem
   assert.equal((await second.json()).idempotent_replay, true);
   assert.equal(tokenCalls, 1);
   assert.equal(env.API_RATE_LIMITER.keys.length, 1);
+  const tokenWrite = env.ORIGIN_STATE.puts.find(item =>
+    item.key.startsWith("token-idempotency:"));
+  assert.equal(tokenWrite.options.expirationTtl, 60);
 });
 
 test("every mutation requires an idempotency key", async () => {
@@ -343,6 +351,10 @@ test("five-minute health evaluation stores preferred origin and alerts on change
   assert.equal(stored.northflank.healthy, true);
   assert.equal(stored.alert_sent, true);
   assert.equal(alertCalls, 1);
+  assert.equal(
+    env.ORIGIN_STATE.puts.filter(item => item.key === ORIGIN_STATE_KEY).length,
+    1,
+  );
 });
 
 test("both Python origins can fail while the edge health and public site contract stay online", async () => {
