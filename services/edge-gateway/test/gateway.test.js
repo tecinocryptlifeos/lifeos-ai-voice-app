@@ -232,34 +232,247 @@ test("a failed mutation is never replayed to Northflank", async () => {
   assert.equal(calls.some(item => item.startsWith(NORTHFLANK_ORIGIN)), false);
 });
 
-test("a new supported mutation routes once to standby when primary is already down", async () => {
+test("a supported account read routes once to standby when primary is already down", async () => {
   const calls = [];
+
   const state = healthyState({
     preferred: "northflank",
-    render: { name: "render", healthy: false, status: 503, latency_ms: 20 },
-    northflank: { name: "northflank", healthy: true, status: 200, latency_ms: 12 },
+    render: {
+      name: "render",
+      healthy: false,
+      status: 503,
+      latency_ms: 20,
+    },
+    northflank: {
+      name: "northflank",
+      healthy: true,
+      status: 200,
+      latency_ms: 12,
+    },
   });
+
   const env = baseEnv({
     state,
     fetcher: authFetcher(async (input, options) => {
-      calls.push(String(input));
-      assert.equal(options.headers.get("X-LifeOS-Gateway-Secret"), "test-gateway-secret");
-      assert.equal(options.headers.get("Idempotency-Key"), "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff");
-      return Response.json({ ok: true, origin: "standby" });
+      const url = String(input);
+      calls.push(url);
+
+      assert.equal(
+        options.headers.get("X-LifeOS-Gateway-Secret"),
+        "test-gateway-secret",
+      );
+
+      return Response.json({
+        ok: true,
+        origin: "standby",
+      });
     }),
   });
-  const response = await gateway.fetch(authenticated("/api/chat-decision", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Idempotency-Key": "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
-    },
-    body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] }),
-  }), env);
+
+  const response = await gateway.fetch(
+    authenticated("/api/account-profile"),
+    env,
+  );
+
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { ok: true, origin: "standby" });
-  assert.equal(calls.some(item => item.startsWith(RENDER_ORIGIN)), false);
-  assert.equal(calls.filter(item => item.startsWith(NORTHFLANK_ORIGIN)).length, 1);
+
+  assert.deepEqual(
+    await response.json(),
+    {
+      ok: true,
+      origin: "standby",
+    },
+  );
+
+  assert.equal(
+    calls.some(item => item.startsWith(RENDER_ORIGIN)),
+    false,
+  );
+
+  assert.equal(
+    calls.filter(item =>
+      item.startsWith(NORTHFLANK_ORIGIN))
+      .length,
+    1,
+  );
+});
+
+// LOSAI_WORKER_CHAT_FALLBACK_V2_TEST
+test("a new chat mutation uses the Worker fallback when primary is already down", async () => {
+  const calls = [];
+
+  const state = healthyState({
+    preferred: "edge",
+    render: {
+      name: "render",
+      healthy: false,
+      status: 503,
+      latency_ms: 20,
+    },
+    northflank: {
+      name: "northflank",
+      healthy: false,
+      status: 503,
+      latency_ms: 20,
+    },
+  });
+
+  const env = baseEnv({
+    state,
+    fetcher: authFetcher(async (input, options) => {
+      const url = String(input);
+      calls.push(url);
+
+      if (
+        url.startsWith(
+          "https://generativelanguage.googleapis.com/v1beta/models/",
+        )
+      ) {
+        assert.equal(
+          options.headers["x-goog-api-key"],
+          "gemini-secret-test",
+        );
+
+        const body = JSON.parse(options.body);
+
+        assert.equal(
+          Array.isArray(body.contents),
+          true,
+        );
+
+        assert.deepEqual(
+          body.tools,
+          [{ google_search: {} }],
+        );
+
+        assert.equal(
+          body.systemInstruction.parts[0].text.includes(
+            "LifeOS AI decision-intelligence assistant",
+          ),
+          true,
+        );
+
+        return Response.json({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: "Worker fallback reply",
+                  },
+                ],
+              },
+              groundingMetadata: {
+                groundingChunks: [
+                  {
+                    web: {
+                      uri: "https://example.com/source",
+                      title: "Example source",
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected outbound request: ${url}`);
+    }),
+  });
+
+  const makeRequest = () =>
+    authenticated("/api/chat-decision", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key":
+          "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+      },
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "user",
+            content: "Hello",
+          },
+        ],
+      }),
+    });
+
+  const first = await gateway.fetch(
+    makeRequest(),
+    env,
+  );
+
+  assert.equal(first.status, 200);
+
+  const firstData = await first.json();
+
+  assert.equal(
+    firstData.reply,
+    "Worker fallback reply",
+  );
+
+  assert.equal(
+    firstData.fallback_origin,
+    "cloudflare-worker",
+  );
+
+  assert.equal(
+    firstData.idempotent_replay,
+    false,
+  );
+
+  assert.equal(firstData.grounded, true);
+  assert.equal(firstData.sources.length, 1);
+
+  const second = await gateway.fetch(
+    makeRequest(),
+    env,
+  );
+
+  assert.equal(second.status, 200);
+
+  assert.equal(
+    (await second.json()).idempotent_replay,
+    true,
+  );
+
+  assert.equal(
+    calls.some(item =>
+      item.startsWith(RENDER_ORIGIN)),
+    false,
+  );
+
+  assert.equal(
+    calls.some(item =>
+      item.startsWith(NORTHFLANK_ORIGIN)),
+    false,
+  );
+
+  assert.equal(
+    calls.filter(item =>
+      item.startsWith(
+        "https://generativelanguage.googleapis.com/v1beta/models/",
+      ))
+      .length,
+    1,
+  );
+
+  assert.equal(
+    env.API_RATE_LIMITER.keys.length,
+    1,
+  );
+
+  const cacheWrite = env.ORIGIN_STATE.puts.find(
+    item =>
+      item.key.startsWith("chat-idempotency:"),
+  );
+
+  assert.equal(
+    cacheWrite.options.expirationTtl,
+    60,
+  );
 });
 
 test("an authenticated account read is not blindly replayed", async () => {

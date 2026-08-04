@@ -1,0 +1,44 @@
+{
+  "packageId": "losia.htc.com",
+  "host": "losai.ng.eu.org",
+  "name": "LifeOS AI — Synthetic Decision Intelligence",
+  "launcherName": "LifeOS AI",
+  "display": "standalone",
+  "themeColor": "#000000",
+  "themeColorDark": "#000000",
+  "navigationColor": "#000000",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#000000",
+  "navigationDividerColorDark": "#000000",
+  "backgroundColor": "#000000",
+  "enableNotifications": false,
+  "enableSiteSettingsShortcut": true,
+  "startUrl": "/chat?source=android-twa",
+  "iconUrl": "https://losai.ng.eu.org/icons/lifeos-icon-512.png",
+  "maskableIconUrl": "https://losai.ng.eu.org/icons/lifeos-icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "orientation": "portrait",
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://losai.ng.eu.org/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "minSdkVersion": 23,
+  "signingKey": {
+    "path": "./signing-key.jks",
+    "alias": "losai-upload"
+  },
+  "fingerprints": [
+    {
+      "name": "LOSAI test and upload certificate",
+      "value": "FE:F9:92:5A:ED:53:CE:12:AD:8A:DE:16:5F:34:40:94:F4:0D:39:11:1B:2E:88:83:3E:53:57:16:89:BD:DE:04"
+    }
+  ],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "alphaDependencies": {
+    "enabled": false
+  }
+}
