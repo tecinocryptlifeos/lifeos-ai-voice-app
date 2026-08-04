@@ -27,7 +27,7 @@ jobs:
       TWA_DIR: apps/android-twa
       PACKAGE_ID: losia.htc.com
       KEY_ALIAS: losai-upload
-      KEYSTORE_PATH: ${{ runner.temp }}/losai-upload.jks
+      KEYSTORE_PATH: /tmp/losai-upload.jks
 
     steps:
       - name: Check out repository
