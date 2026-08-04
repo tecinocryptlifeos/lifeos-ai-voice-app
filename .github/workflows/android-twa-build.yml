@@ -2,6 +2,13 @@ name: Build signed LOSAI Android test app
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - architecture/worker-chat-fallback
+    paths:
+      - ".github/workflows/android-twa-build.yml"
+      - "apps/android-twa/**"
+      - "web/lifeos_voice/.well-known/assetlinks.json"
 
 permissions:
   contents: read
