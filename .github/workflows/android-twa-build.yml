@@ -469,6 +469,11 @@ jobs:
         run: |
           set -Eeuo pipefail
 
+          export ANDROID_HOME="$BUBBLEWRAP_ANDROID_SDK"
+          export ANDROID_SDK_ROOT="$BUBBLEWRAP_ANDROID_SDK"
+
+          [ "$ANDROID_HOME" = "$ANDROID_SDK_ROOT" ]
+
           bubblewrap build \
             --manifest="$PWD/twa-manifest.ci.json" \
             --signingKeyPath="$KEYSTORE_PATH" \
