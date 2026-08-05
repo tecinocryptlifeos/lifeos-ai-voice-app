@@ -286,10 +286,178 @@ jobs:
         run: |
           set -Eeuo pipefail
 
+          CI_MANIFEST="$PWD/twa-manifest.ci.json"
+          ASSET_LOG="/tmp/losai-twa-assets.log"
+          ASSET_PORT="8765"
+
+          python - \
+            "$PWD/twa-manifest.json" \
+            "$CI_MANIFEST" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          source = Path(sys.argv[1])
+          destination = Path(sys.argv[2])
+
+          manifest = json.loads(
+              source.read_text(encoding="utf-8")
+          )
+
+          if manifest.get("host") != "losai.ng.eu.org":
+              raise SystemExit(
+                  "Unexpected trusted host"
+              )
+
+          if (
+              manifest.get("startUrl")
+              != "/chat?source=android-twa"
+          ):
+              raise SystemExit(
+                  "Unexpected Android start URL"
+              )
+
+          local_origin = "http://127.0.0.1:8765"
+
+          manifest["iconUrl"] = (
+              local_origin
+              + "/icons/lifeos-icon-512.png"
+          )
+
+          manifest["maskableIconUrl"] = (
+              local_origin
+              + "/icons/"
+              + "lifeos-icon-maskable-512.png"
+          )
+
+          manifest["webManifestUrl"] = (
+              local_origin
+              + "/manifest.webmanifest"
+          )
+
+          destination.write_text(
+              json.dumps(manifest, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          print("CI_BUILD_MANIFEST_CREATED=PASS")
+          print("TRUSTED_HOST_UNCHANGED=PASS")
+          print("START_URL_UNCHANGED=PASS")
+          PY
+
+          python -m http.server \
+            "$ASSET_PORT" \
+            --bind 127.0.0.1 \
+            --directory \
+            "$GITHUB_WORKSPACE/web/lifeos_voice" \
+            >"$ASSET_LOG" 2>&1 &
+
+          ASSET_SERVER_PID=$!
+
+          stop_asset_server() {
+            kill "$ASSET_SERVER_PID" \
+              >/dev/null 2>&1 || true
+
+            wait "$ASSET_SERVER_PID" \
+              >/dev/null 2>&1 || true
+          }
+
+          trap stop_asset_server EXIT
+
+          python - <<'PY'
+          import time
+          import urllib.request
+
+          urls = (
+              "http://127.0.0.1:8765/"
+              "manifest.webmanifest",
+              "http://127.0.0.1:8765/icons/"
+              "lifeos-icon-512.png",
+              "http://127.0.0.1:8765/icons/"
+              "lifeos-icon-maskable-512.png",
+          )
+
+          for attempt in range(30):
+              try:
+                  for url in urls:
+                      with urllib.request.urlopen(
+                          url,
+                          timeout=2,
+                      ) as response:
+                          if response.status != 200:
+                              raise RuntimeError(
+                                  f"{url}: "
+                                  f"{response.status}"
+                              )
+
+                  print("LOCAL_TWA_ASSETS=PASS")
+                  break
+
+              except Exception:
+                  if attempt == 29:
+                      raise
+
+                  time.sleep(0.5)
+          PY
+
           bubblewrap update \
             --skipVersionUpgrade \
-            --manifest="$PWD/twa-manifest.json"
+            --manifest="$CI_MANIFEST"
 
+          stop_asset_server
+          trap - EXIT
+
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/build.gradle")
+
+          text = path.read_text(encoding="utf-8")
+
+          local_url = (
+              "http://127.0.0.1:8765/"
+              "manifest.webmanifest"
+          )
+
+          production_url = (
+              "https://losai.ng.eu.org/"
+              "manifest.webmanifest"
+          )
+
+          if text.count(local_url) != 1:
+              raise SystemExit(
+                  "Generated Web Manifest URL "
+                  "was not found exactly once"
+              )
+
+          path.write_text(
+              text.replace(
+                  local_url,
+                  production_url,
+                  1,
+              ),
+              encoding="utf-8",
+          )
+
+          print(
+              "PRODUCTION_WEB_MANIFEST_URL_RESTORED=PASS"
+          )
+          PY
+
+          grep -Fq \
+            "hostName: 'losai.ng.eu.org'" \
+            app/build.gradle
+
+          grep -Fq \
+            "launchUrl: '/chat?source=android-twa'" \
+            app/build.gradle
+
+          grep -Fq \
+            "webManifestUrl: 'https://losai.ng.eu.org/manifest.webmanifest'" \
+            app/build.gradle
+
+          echo "GENERATED_TRUSTED_HOST=PASS"
+          echo "GENERATED_START_URL=PASS"
           echo "ANDROID_PROJECT_GENERATED=PASS"
 
       - name: Build signed APK and AAB
@@ -302,7 +470,7 @@ jobs:
           set -Eeuo pipefail
 
           bubblewrap build \
-            --manifest="$PWD/twa-manifest.json" \
+            --manifest="$PWD/twa-manifest.ci.json" \
             --signingKeyPath="$KEYSTORE_PATH" \
             --signingKeyAlias="$KEY_ALIAS"
 
