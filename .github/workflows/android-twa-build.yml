@@ -28,6 +28,7 @@ jobs:
       PACKAGE_ID: losia.htc.com
       KEY_ALIAS: losai-upload
       KEYSTORE_PATH: /tmp/losai-upload.jks
+      BUBBLEWRAP_ANDROID_SDK: /tmp/losai-bubblewrap-android-sdk
 
     steps:
       - name: Check out repository
@@ -54,6 +55,17 @@ jobs:
           [ -x "$ANDROID_HOME/build-tools/36.0.0/aapt" ]
           [ -x "$ANDROID_HOME/build-tools/36.0.0/apksigner" ]
 
+          # Bubblewrap 1.24.1 internally uses Build Tools 34.0.0.
+          [ -x "$ANDROID_HOME/build-tools/34.0.0/zipalign" ]
+          [ -x "$ANDROID_HOME/build-tools/34.0.0/apksigner" ]
+
+          SDKMANAGER="$(
+            find "$ANDROID_HOME/cmdline-tools"               -type f               -name sdkmanager               -print               -quit
+          )"
+
+          [ -n "$SDKMANAGER" ]
+          [ -x "$SDKMANAGER" ]
+
           echo "ANDROID_BUILD_ENVIRONMENT=PASS"
 
       - name: Install and configure pinned Bubblewrap
@@ -63,9 +75,59 @@ jobs:
 
           npm install --global @bubblewrap/cli@1.24.1
 
-          mkdir -p "$HOME/.bubblewrap"
+          rm -rf "$BUBBLEWRAP_ANDROID_SDK"
+          mkdir -p             "$BUBBLEWRAP_ANDROID_SDK"             "$HOME/.bubblewrap"
 
-          python -c 'import json, os; from pathlib import Path; p=Path.home()/".bubblewrap"/"config.json"; p.write_text(json.dumps({"jdkPath":os.environ["JAVA_HOME"],"androidSdkPath":os.environ["ANDROID_HOME"]})+"\n",encoding="utf-8"); print("BUBBLEWRAP_CONFIG=PASS")'
+          # Create an isolated SDK view. The real hosted SDK remains unchanged.
+          for sdk_entry in "$ANDROID_HOME"/*; do
+            [ -e "$sdk_entry" ] || continue
+
+            ln -s               "$sdk_entry"               "$BUBBLEWRAP_ANDROID_SDK/$(basename "$sdk_entry")"
+          done
+
+          SDKMANAGER="$(
+            find "$ANDROID_HOME/cmdline-tools"               -type f               -name sdkmanager               -print               -quit
+          )"
+
+          [ -n "$SDKMANAGER" ]
+          [ -x "$SDKMANAGER" ]
+
+          # Bubblewrap 1.24.1 expects sdkmanager under SDK_ROOT/bin.
+          rm -rf "$BUBBLEWRAP_ANDROID_SDK/bin"
+
+          ln -s             "$(dirname "$SDKMANAGER")"             "$BUBBLEWRAP_ANDROID_SDK/bin"
+
+          [ -x "$BUBBLEWRAP_ANDROID_SDK/bin/sdkmanager" ]
+          [ -d "$BUBBLEWRAP_ANDROID_SDK/build-tools/34.0.0" ]
+          [ -d "$BUBBLEWRAP_ANDROID_SDK/platforms/android-36" ]
+
+          export BUBBLEWRAP_ANDROID_SDK
+
+          python - <<'BUBBLEWRAP_CONFIG_PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config_path = (
+              Path.home()
+              / ".bubblewrap"
+              / "config.json"
+          )
+
+          config = {
+              "jdkPath": os.environ["JAVA_HOME"],
+              "androidSdkPath": os.environ[
+                  "BUBBLEWRAP_ANDROID_SDK"
+              ],
+          }
+
+          config_path.write_text(
+              json.dumps(config) + "\n",
+              encoding="utf-8",
+          )
+
+          print("BUBBLEWRAP_CONFIG=PASS")
+          BUBBLEWRAP_CONFIG_PY
 
           bubblewrap doctor
           bubblewrap --version
