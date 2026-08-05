@@ -453,7 +453,7 @@ jobs:
             app/build.gradle
 
           grep -Fq \
-            "webManifestUrl: 'https://losai.ng.eu.org/manifest.webmanifest'" \
+            "resValue \"string\", \"webManifestUrl\", 'https://losai.ng.eu.org/manifest.webmanifest'" \
             app/build.gradle
 
           echo "GENERATED_TRUSTED_HOST=PASS"
