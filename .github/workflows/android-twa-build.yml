@@ -288,7 +288,7 @@ jobs:
 
           bubblewrap update \
             --skipVersionUpgrade \
-            --manifest="$PWD"
+            --manifest="$PWD/twa-manifest.json"
 
           echo "ANDROID_PROJECT_GENERATED=PASS"
 
@@ -302,7 +302,7 @@ jobs:
           set -Eeuo pipefail
 
           bubblewrap build \
-            --manifest="$PWD" \
+            --manifest="$PWD/twa-manifest.json" \
             --signingKeyPath="$KEYSTORE_PATH" \
             --signingKeyAlias="$KEY_ALIAS"
 
