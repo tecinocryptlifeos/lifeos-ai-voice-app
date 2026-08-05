@@ -56,16 +56,16 @@ jobs:
 
           echo "ANDROID_BUILD_ENVIRONMENT=PASS"
 
-      - name: Install pinned Bubblewrap
+      - name: Install and configure pinned Bubblewrap
         shell: bash
         run: |
           set -Eeuo pipefail
 
           npm install --global @bubblewrap/cli@1.24.1
 
-          bubblewrap updateConfig \
-            --jdkPath="$JAVA_HOME" \
-            --androidSdkPath="$ANDROID_HOME"
+          mkdir -p "$HOME/.bubblewrap"
+
+          python -c 'import json, os; from pathlib import Path; p=Path.home()/".bubblewrap"/"config.json"; p.write_text(json.dumps({"jdkPath":os.environ["JAVA_HOME"],"androidSdkPath":os.environ["ANDROID_HOME"]})+"\n",encoding="utf-8"); print("BUBBLEWRAP_CONFIG=PASS")'
 
           bubblewrap doctor
           bubblewrap --version
