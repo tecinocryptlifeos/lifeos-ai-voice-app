@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "losia.htc.com",
+      "sha256_cert_fingerprints": [
+        "FE:F9:92:5A:ED:53:CE:12:AD:8A:DE:16:5F:34:40:94:F4:0D:39:11:1B:2E:88:83:3E:53:57:16:89:BD:DE:04"
+      ]
+    }
+  }
+]

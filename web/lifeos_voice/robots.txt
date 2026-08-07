@@ -4,6 +4,7 @@ Disallow: /chat
 Disallow: /voice
 Disallow: /gemini-live
 Disallow: /admin
+Disallow: /account
 Disallow: /reset-password
 Disallow: /api/
 Disallow: /health
