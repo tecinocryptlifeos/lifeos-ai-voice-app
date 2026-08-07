@@ -304,7 +304,7 @@ jobs:
               source.read_text(encoding="utf-8")
           )
 
-          if manifest.get("host") != "losai.ng.eu.org":
+          if manifest.get("host") != "lifeosai.pages.dev":
               raise SystemExit(
                   "Unexpected trusted host"
               )
@@ -420,7 +420,7 @@ jobs:
           )
 
           production_url = (
-              "https://losai.ng.eu.org/"
+              "https://lifeosai.pages.dev/"
               "manifest.webmanifest"
           )
 
@@ -445,7 +445,7 @@ jobs:
           PY
 
           grep -Fq \
-            "hostName: 'losai.ng.eu.org'" \
+            "hostName: 'lifeosai.pages.dev'" \
             app/build.gradle
 
           grep -Fq \
@@ -453,7 +453,7 @@ jobs:
             app/build.gradle
 
           grep -Fq \
-            "resValue \"string\", \"webManifestUrl\", 'https://losai.ng.eu.org/manifest.webmanifest'" \
+            "resValue \"string\", \"webManifestUrl\", 'https://lifeosai.pages.dev/manifest.webmanifest'" \
             app/build.gradle
 
           echo "GENERATED_TRUSTED_HOST=PASS"
