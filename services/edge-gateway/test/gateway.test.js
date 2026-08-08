@@ -357,6 +357,36 @@ test("five-minute health evaluation stores preferred origin and alerts on change
   );
 });
 
+test("missing Northflank configuration falls back to edge without probing standby", async () => {
+  const calls = [];
+  const state = healthyState({ preferred: "edge" });
+  const env = baseEnv({
+    state,
+    fetcher: async input => {
+      const url = String(input);
+      calls.push(url);
+      if (url === `${RENDER_ORIGIN}/health`) {
+        return new Response("down", { status: 503 });
+      }
+      throw new Error(`Unexpected ${url}`);
+    },
+  });
+  delete env.NORTHFLANK_ORIGIN;
+
+  let task;
+  await gateway.scheduled({}, env, {
+    waitUntil(value) { task = value; },
+  });
+  await task;
+
+  const stored = await env.ORIGIN_STATE.get(ORIGIN_STATE_KEY, { type: "json" });
+  assert.equal(stored.preferred, "edge");
+  assert.equal(stored.render.healthy, false);
+  assert.equal(stored.northflank.configured, false);
+  assert.equal(stored.northflank.healthy, false);
+  assert.deepEqual(calls, [`${RENDER_ORIGIN}/health`]);
+});
+
 test("both Python origins can fail while the edge health and public site contract stay online", async () => {
   const state = healthyState({
     preferred: "edge",

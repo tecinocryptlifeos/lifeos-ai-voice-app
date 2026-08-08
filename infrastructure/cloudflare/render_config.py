@@ -17,7 +17,6 @@ REQUIRED = (
     "LIFEOS_PUBLIC_SITE_ORIGIN",
     "LIFEOS_API_ORIGIN",
     "RENDER_ORIGIN",
-    "NORTHFLANK_ORIGIN",
     "SUPABASE_URL",
     "SUPABASE_PUBLISHABLE_KEY",
     "ORIGIN_STATE_KV_ID",
@@ -44,15 +43,20 @@ def origin(value: str, name: str) -> str:
 
 def main() -> None:
     values = {name: os.environ.get(name, "").strip() for name in REQUIRED}
-    missing = [name for name, value in values.items() if not value]
+    values["NORTHFLANK_ORIGIN"] = os.environ.get("NORTHFLANK_ORIGIN", "").strip()
+    missing = [name for name in REQUIRED if not values[name]]
     if missing:
         raise SystemExit("Missing required public configuration: " + ", ".join(missing))
 
     for name in (
         "LIFEOS_PUBLIC_SITE_ORIGIN", "LIFEOS_API_ORIGIN", "RENDER_ORIGIN",
-        "NORTHFLANK_ORIGIN", "SUPABASE_URL",
+        "SUPABASE_URL",
     ):
         values[name] = origin(values[name], name)
+    if values["NORTHFLANK_ORIGIN"]:
+        values["NORTHFLANK_ORIGIN"] = origin(
+            values["NORTHFLANK_ORIGIN"], "NORTHFLANK_ORIGIN"
+        )
     values["LIFEOS_ALLOWED_ORIGINS"] = ",".join(
         origin(item, "LIFEOS_ALLOWED_ORIGINS")
         for item in values["LIFEOS_ALLOWED_ORIGINS"].split(",")

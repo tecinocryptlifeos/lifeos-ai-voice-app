@@ -6,15 +6,15 @@ Roll back to the last known-good Pages deployment. Keep the API Worker unchanged
 
 ## Worker unavailable
 
-Roll back the Worker deployment/version first. Do not expose Render or Northflank as public browser API origins. If Worker recovery is not immediate, leave Pages informational surfaces online and place protected dynamic features in controlled maintenance.
+Roll back the Worker deployment/version first. Do not expose Render or any optional standby as a public browser API origin. If Worker recovery is not immediate, leave Pages informational surfaces online and place protected dynamic features in controlled maintenance.
 
 ## Render unavailable
 
-Allow the next scheduled five-minute probe to record Northflank as preferred, or run the scheduled handler only through the documented Cloudflare test facility. Existing in-flight mutations are not replayed. New supported requests may go once to Northflank.
+Allow the next scheduled five-minute probe to record the new preferred state, or run the scheduled handler only through the documented Cloudflare test facility. If a configured standby is healthy, new supported requests may go once to that standby. If no standby is configured, the Worker remains preferred at the edge for edge-native operations and Python-dependent features return controlled maintenance. Existing in-flight mutations are never replayed.
 
-## Both Python origins unavailable
+## All configured Python origins unavailable
 
-Keep homepage, legal pages, sign-in, Supabase data, `/health`, `/config`, session validation, and Gemini Live token issuance online at the edge. Chat and other Python-dependent features show controlled maintenance. Restore Render first, then verify Northflank independently.
+Keep homepage, legal pages, sign-in, Supabase data, `/health`, `/config`, session validation, and Gemini Live token issuance online at the edge. Chat and other Python-dependent features show controlled maintenance. Restore Render first, then verify any configured standby independently.
 
 ## Supabase unavailable
 

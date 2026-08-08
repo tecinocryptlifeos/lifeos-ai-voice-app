@@ -45,7 +45,6 @@ jobs:
           LIFEOS_PUBLIC_SITE_ORIGIN: https://losai.ng.eu.org
           LIFEOS_API_ORIGIN: https://api.losai.ng.eu.org
           RENDER_ORIGIN: https://losai.onrender.com
-          NORTHFLANK_ORIGIN: https://losai-standby.example.com
           SUPABASE_URL: https://example.supabase.co
           SUPABASE_PUBLISHABLE_KEY: sb_publishable_example
           ORIGIN_STATE_KV_ID: "11111111111111111111111111111111"
