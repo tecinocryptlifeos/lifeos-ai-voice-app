@@ -8,14 +8,14 @@ Values are recorded in provider secret stores, never in Git. “Public” means 
 | `LIFEOS_API_ORIGIN` | build | yes | no | no | Public exact origin |
 | `LIFEOS_ALLOWED_ORIGINS` | no | yes | optional | no | Public exact allowlist; no `*` |
 | `RENDER_ORIGIN` | no | yes | no | no | Public origin, operationally sensitive |
-| `NORTHFLANK_ORIGIN` | no | yes | no | no | Public origin, operationally sensitive |
+| `NORTHFLANK_ORIGIN` | no | optional | no | only if standby enabled | Optional standby origin; omit or leave empty when no standby is configured |
 | `LIFEOS_GATEWAY_REQUIRED` | no | no | yes | implicit | Public control flag |
-| `LIFEOS_GATEWAY_SHARED_SECRET` | no | secret | secret | secret | Secret; same generated value on all three |
+| `LIFEOS_GATEWAY_SHARED_SECRET` | no | secret | secret | only if standby enabled | Secret; same generated value on Worker, Render, and any enabled standby |
 | `LIFEOS_FAILOVER_ALERT_WEBHOOK_URL` | no | secret | no | no | Secret |
-| `SUPABASE_URL` | build/CSP | yes | yes | yes | Public project URL |
-| `SUPABASE_PUBLISHABLE_KEY` | via config | yes | yes | yes | Public key, protected by RLS |
-| `SUPABASE_SECRET_KEY` | never | never | secret | secret | High-impact secret |
-| `GEMINI_API_KEY` | never | secret | secret | secret | Secret |
+| `SUPABASE_URL` | build/CSP | yes | yes | only if standby enabled | Public project URL |
+| `SUPABASE_PUBLISHABLE_KEY` | via config | yes | yes | only if standby enabled | Public key, protected by RLS |
+| `SUPABASE_SECRET_KEY` | never | never | secret | only if standby enabled | High-impact secret |
+| `GEMINI_API_KEY` | never | secret | secret | only if standby enabled | Secret |
 | `LIFEOS_ADMIN_EMAILS` | no | no | secret config | no | Private authorization input |
 | `LIFEOS_GA_MEASUREMENT_ID` | build | no | no | no | Optional public identifier |
 | `LIFEOS_ADSENSE_PUBLISHER_ID` | build | no | retained legacy | no | Optional public identifier |
