@@ -22,9 +22,12 @@ function safeOrigin(value, name) {
 }
 
 export function originUrls(env) {
+  const northflankValue = String(env.NORTHFLANK_ORIGIN || "").trim();
   return {
     render: safeOrigin(env.RENDER_ORIGIN, "The Render origin"),
-    northflank: safeOrigin(env.NORTHFLANK_ORIGIN, "The Northflank origin"),
+    northflank: northflankValue
+      ? safeOrigin(northflankValue, "The Northflank origin")
+      : null,
   };
 }
 
@@ -86,7 +89,15 @@ export async function evaluateOrigins(env) {
   const origins = originUrls(env);
   const [render, northflank] = await Promise.all([
     probeOrigin(env, "render", origins.render),
-    probeOrigin(env, "northflank", origins.northflank),
+    origins.northflank
+      ? probeOrigin(env, "northflank", origins.northflank)
+      : Promise.resolve({
+          name: "northflank",
+          configured: false,
+          healthy: false,
+          status: 0,
+          latency_ms: 0,
+        }),
   ]);
   const previous = await env.ORIGIN_STATE.get(ORIGIN_STATE_KEY, { type: "json" });
   const preferred = render.healthy ? "render" : northflank.healthy ? "northflank" : "edge";
