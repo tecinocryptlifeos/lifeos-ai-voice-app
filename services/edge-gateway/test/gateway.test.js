@@ -347,7 +347,21 @@ test("a new chat mutation uses the Worker fallback when primary is already down"
 
         assert.equal(
           body.systemInstruction.parts[0].text.includes(
-            "LifeOS AI decision-intelligence assistant",
+            "LifeOSAI Synthetic Artificial Intelligence assistant",
+          ),
+          true,
+        );
+
+        assert.equal(
+          body.systemInstruction.parts[0].text.includes(
+            "IGBO UNDERSTANDING POLICY",
+          ),
+          true,
+        );
+
+        assert.equal(
+          body.systemInstruction.parts[0].text.includes(
+            "Igbo Izugbe",
           ),
           true,
         );

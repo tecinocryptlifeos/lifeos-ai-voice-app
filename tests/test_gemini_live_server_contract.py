@@ -29,9 +29,9 @@ class GeminiLiveServerContractTests(unittest.TestCase):
         controller = (
             ROOT / "web/lifeos_voice/assets/gemini_live_v1.js"
         ).read_text(encoding="utf-8")
-        self.assertIn("lifeos-gemini31-resilient-live-v3.0.0-20260723", server)
-        self.assertIn("gemini_live_v1.js?v=3.0.0", page)
-        self.assertIn('version:"3.0.0"', controller)
+        self.assertIn("lifeos-sophia-language-app-shell-v3.1.0-20260812", server)
+        self.assertIn("gemini_live_v1.js?v=3.1.0", page)
+        self.assertIn('version:"3.1.0"', controller)
 
 
 if __name__ == "__main__":
