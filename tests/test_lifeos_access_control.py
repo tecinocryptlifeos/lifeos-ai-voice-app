@@ -610,7 +610,7 @@ class GeminiGroundingTests(unittest.TestCase):
 class InterfaceContractTests(unittest.TestCase):
     def test_release_diagnostic_identifies_v2_1_0_and_preserves_v2_0_6_features(self):
         application = (ROOT / "app/lifeos_voice_server.py").read_text(encoding="utf-8")
-        self.assertIn("lifeos-gemini31-resilient-live-v3.0.0-20260723", application)
+        self.assertIn("lifeos-sophia-language-app-shell-v3.1.0-20260812", application)
         self.assertIn('"premium_igbo_priority": True', application)
         self.assertIn('"premium_voice_output": True', application)
         self.assertIn('"live_google_search": True', application)
@@ -630,10 +630,12 @@ class InterfaceContractTests(unittest.TestCase):
 
     def test_chat_has_premium_igbo_search_and_source_display(self):
         application = (ROOT / "app/lifeos_voice_server.py").read_text(encoding="utf-8")
+        intelligence = (ROOT / "app/sophia_intelligence.py").read_text(encoding="utf-8")
         page = (ROOT / "web/lifeos_voice/chat.html").read_text(encoding="utf-8")
-        self.assertIn("fluent contemporary Standard Igbo", application)
-        self.assertIn("use Google Search", application)
+        self.assertIn("fluent contemporary", intelligence)
+        self.assertIn("Search if this session supplies it", intelligence)
         self.assertIn("generate_grounded_text", application)
+        self.assertIn("system_instruction=SOPHIA_CHAT_SYSTEM_INSTRUCTION", application)
         self.assertIn("Web sources", page)
         self.assertIn('rel = "noopener noreferrer"', page)
         self.assertNotIn("● Online", page)
@@ -675,7 +677,7 @@ class InterfaceContractTests(unittest.TestCase):
 
     def test_multilingual_policy_and_despina_remain_in_live_controller(self):
         controller = (ROOT / "web/lifeos_voice/assets/gemini_live_v1.js").read_text(encoding="utf-8")
-        self.assertIn("LIFEOS_MULTILINGUAL_VOICE_INTELLIGENCE_V2", controller)
+        self.assertIn("LIFEOS_MULTILINGUAL_VOICE_INTELLIGENCE_V3", controller)
         self.assertIn("Automatically detect the language or language mixture", controller)
         self.assertIn('voiceName:"Despina"', controller)
         self.assertIn('model:"models/"+payload.model', controller)
@@ -688,7 +690,7 @@ class InterfaceContractTests(unittest.TestCase):
         self.assertIn("sessionResumption:sessionResumeHandle?{handle:sessionResumeHandle}:{}", controller)
         self.assertIn("contextWindowCompression:{slidingWindow:{}}", controller)
         self.assertIn("handleMessage(event,nextSocket,resuming)", controller)
-        self.assertIn('version:"3.0.0"', controller)
+        self.assertIn('version:"3.1.0"', controller)
 
     def test_gemini31_primary_and_capacity_fallback_are_explicit(self):
         gateway = (ROOT / "app/gemini_live_gateway.py").read_text(encoding="utf-8")
@@ -704,7 +706,7 @@ class InterfaceContractTests(unittest.TestCase):
         self.assertIn("providerCapacityFailure", controller)
         self.assertIn("PRIMARY_SUPPRESSION_MS", controller)
         self.assertIn("Never answer an Igbo turn with a generic English request", controller)
-        self.assertIn("gemini_live_v1.js?v=3.0.0", page)
+        self.assertIn("gemini_live_v1.js?v=3.1.0", page)
         self.assertIn("LIFEOS_GEMINI_LIVE_PRIMARY_MODEL", deployment)
         self.assertIn("LIFEOS_GEMINI_LIVE_FALLBACK_MODEL", deployment)
 

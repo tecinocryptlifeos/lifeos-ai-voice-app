@@ -36,6 +36,21 @@ except ImportError:
     from app.gemini_client import GeminiClient
 
 try:
+    from sophia_intelligence import (
+        SOPHIA_CHAT_SYSTEM_INSTRUCTION,
+        SOPHIA_REALTIME_SYSTEM_INSTRUCTION,
+        compact_chat_messages,
+        gemini_chat_contents,
+    )
+except ImportError:
+    from app.sophia_intelligence import (
+        SOPHIA_CHAT_SYSTEM_INSTRUCTION,
+        SOPHIA_REALTIME_SYSTEM_INSTRUCTION,
+        compact_chat_messages,
+        gemini_chat_contents,
+    )
+
+try:
     from lifeos_public_tts import generate_lifeos_voice_wav
 except ImportError:
     from app.lifeos_public_tts import generate_lifeos_voice_wav
@@ -67,7 +82,7 @@ WEB_DIR = BASE_DIR / "web" / "lifeos_voice"
 WEB_FILE = WEB_DIR / "index.html"
 AUDIO_DIR = WEB_DIR / "audio"
 
-LIFEOS_RELEASE = "lifeos-gemini31-resilient-live-v3.0.0-20260723"
+LIFEOS_RELEASE = "lifeos-sophia-language-app-shell-v3.1.0-20260812"
 LIFEOS_QUEUE_RELEASE = "lifeos-queue-admin-interface-v1.2.0-20260720"
 DEFAULT_PUBLIC_SITE_ORIGIN = "https://losai.onrender.com"
 LEGACY_PUBLIC_HOSTS = {"lifeos-ai-voice-app.onrender.com"}
@@ -178,10 +193,14 @@ def public_monetization_markup():
 
 
 SYSTEM_STYLE = """
-You are LifeOS AI, a premium synthetic decision-intelligence assistant.
+You are Sophia, the LifeOSAI Synthetic Artificial Intelligence assistant.
 
 Analyze the user's decision with strong practical judgement.
 Be direct, useful, and future-facing.
+Understand the full statement in context, preserve names, numbers and negation,
+and answer in the user's language. Treat Igbo as a first-class language: when
+the input is Igbo, reason and respond directly in fluent contemporary Standard
+Igbo rather than translating an English answer word for word.
 
 Return a concise decision audit using this structure:
 
@@ -444,14 +463,7 @@ def lifeos_handle_realtime_session(handler):
         ).strip(),
         "instructions": os.environ.get(
             "LIFEOS_REALTIME_INSTRUCTIONS",
-            (
-                "You are Sophia, the LifeOS "
-                "decision-intelligence voice "
-                "assistant. Listen carefully, "
-                "respond naturally, preserve "
-                "context, and give clear "
-                "practical guidance."
-            ),
+            SOPHIA_REALTIME_SYSTEM_INSTRUCTION,
         ).strip(),
         "audio": {
             "input": {
@@ -812,11 +824,15 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
                     "lifeos_queue_invitation_preview": True,
                     "lifeos_queue_reply_sync_control": True,
                     "multilingual_voice": True,
+                    "sophia_identity": "LifeOSAI Synthetic Artificial Intelligence",
                     "premium_igbo_priority": True,
+                    "igbo_speech_language_selector": True,
                     "premium_voice_output": True,
                     "live_google_search": True,
                     "grounded_chat_search": True,
                     "premium_multilingual_chat": True,
+                    "native_multiturn_chat_context": True,
+                    "chat_context_messages": 12,
                     "reasoning_level": "medium",
                     "live_session_resumption": True,
                     "connected_audio_cue": True,
@@ -830,6 +846,7 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
                     "server_enforced_profile": True,
                     "minimum_age": 13,
                     "public_mobile_pwa": True,
+                    "app_starts_in_chat": True,
                     "branded_black_gold_icon": True,
                     "admin_audit": True,
                     "admin_error_drilldown": True,
@@ -1168,16 +1185,7 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
             session_config = {
                 "type": "realtime",
                 "model": model,
-                "instructions": (
-                    "You are Sophia, the LifeOS realtime decision-intelligence "
-                    "assistant. Speak in natural contemporary London English "
-                    "with warm, clear articulation, varied intonation and "
-                    "measured pacing. Sound human and conversational, never "
-                    "robotic or like a walkie-talkie. The visitor may interrupt "
-                    "at any moment; stop immediately, listen fully, and answer "
-                    "the latest words. Give direct future-outcome guidance, the "
-                    "main risk, the better move, and one practical next action."
-                ),
+                "instructions": SOPHIA_REALTIME_SYSTEM_INSTRUCTION,
                 "audio": {
                     "input": {
                         "noise_reduction": {"type": "near_field"},
@@ -1291,92 +1299,24 @@ class LifeOSVoiceHandler(BaseHTTPRequestHandler):
             raw = self.rfile.read(length)
             data = json.loads(raw.decode("utf-8"))
 
-            messages = data.get("messages") or []
-            if not isinstance(messages, list):
-                raise ValueError("Messages must be a list")
-
-            cleaned = []
-            for item in messages[-8:]:
-                role = str(item.get("role", "")).strip().lower()
-                content = str(item.get("content", "")).strip()
-
-                if role not in ("user", "assistant"):
-                    continue
-
-                if not content:
-                    continue
-
-                # Do not send old system failure messages back into the next prompt.
-                if "could not complete the continuation" in content.lower():
-                    continue
-                if "under high demand" in content.lower():
-                    continue
-                if "reviewing the decision thread" in content.lower():
-                    continue
-
-                limit = 900 if role == "user" else 700
-                cleaned.append((role, content[:limit]))
-
-            if not cleaned:
-                raise ValueError("Message is required")
-
-            latest_user = ""
-            for role, content in reversed(cleaned):
-                if role == "user":
-                    latest_user = content
-                    break
-
-            conversation = "\n".join(
-                f"{role.upper()}: {content}" for role, content in cleaned
-            )
-
-            prompt = f"""
-You are Sophia, the LifeOS AI decision-intelligence assistant. Work carefully,
-reason before answering, and continue the existing conversation instead of
-restarting it.
-
-Latest user message:
-{latest_user}
-
-Compact conversation context:
-{conversation}
-
-Core response rules:
-- Answer the exact request in the language the user is currently using. Do not
-  force English headings into a non-English answer.
-- Give Igbo first-class priority. When the user speaks or requests Igbo, use
-  fluent contemporary Standard Igbo with accurate grammar, vocabulary, tone
-  marks where they improve clarity, and natural culturally appropriate phrasing.
-  Do not mix in English unless a technical name has no clear Igbo equivalent.
-- When the request depends on current or changing facts, use Google Search.
-  Separate verified facts from inference, uncertainty, and opinion. Never invent
-  a source or claim that a search occurred when it did not.
-- For a decision, explain the likely short-term and longer-term outcomes, the
-  main risk, hidden or opportunity cost, safer alternative, and one practical
-  next action. Distinguish likely, possible, and unknown outcomes; never promise
-  a guaranteed future, profit, price, medical result, or legal result.
-- For a normal question, answer it directly without forcing a decision template.
-- Be warm and natural, but never claim human consciousness, human feelings,
-  private-system access, or abilities the service does not possess.
-- Protect privacy and safety. Do not expose secrets or conversation content in
-  operational audit data.
-- Use plain readable text, normally 90 to 220 words, and finish the final sentence.
-"""
+            cleaned = compact_chat_messages(data.get("messages") or [])
+            contents = gemini_chat_contents(cleaned)
 
             try:
                 client = GeminiClient()
                 result = client.generate_grounded_text(
-                    prompt,
                     timeout=18,
                     retries=1,
                     max_output_tokens=900,
+                    contents=contents,
+                    system_instruction=SOPHIA_CHAT_SYSTEM_INSTRUCTION,
                 )
                 reply = result["text"].strip()
                 sources = result.get("sources") or []
             except Exception as e:
                 err = f"{type(e).__name__}: {e}"
                 reply = (
-                    "LifeOS AI received your follow-up, but the intelligence engine could not complete the continuation at this moment. "
+                    "Sophia received your follow-up, but the LifeOSAI intelligence engine could not complete the continuation at this moment. "
                     "The decision thread is still kept on this page. Wait briefly, then send the same follow-up again. "
                     "Do not restart the decision unless you want a fresh audit."
                 )
@@ -1411,7 +1351,7 @@ Core response rules:
                 200,
                 {
                     "ok": True,
-                    "reply": "LifeOS AI could not read that message properly. Please type the question again.",
+                    "reply": "Sophia could not read that message properly. Please type the question again.",
                     "audio_url": None,
                     "tts_error": f"{type(e).__name__}: {e}",
                 },
@@ -1436,6 +1376,7 @@ Core response rules:
             text = " ".join(
                 str(data.get("text") or "").split()
             )
+            language_hint = str(data.get("language") or "auto").strip()[:20]
 
             if not text:
                 raise ValueError("Voice text is required")
@@ -1462,6 +1403,7 @@ Core response rules:
             generate_lifeos_voice_wav(
                 text,
                 output_path,
+                language_hint=language_hint,
                 timeout=42,
             )
 
@@ -1754,8 +1696,8 @@ Core response rules:
                         200,
                         {
                             "ok": True,
-                            "reply": "LifeOS AI is temporarily experiencing high demand from the intelligence engine. Please try again in a moment. Your decision was received, but the future outcome audit could not be completed right now.",
-                            "voice": "LifeOS AI is temporarily experiencing high demand from the intelligence engine. Please try again in a moment.",
+                            "reply": "Sophia is temporarily experiencing high demand from the LifeOSAI intelligence engine. Please try again in a moment. Your decision was received, but the future outcome audit could not be completed right now.",
+                            "voice": "Sophia is temporarily experiencing high demand from the LifeOSAI intelligence engine. Please try again in a moment.",
                             "audit": "",
                             "tone": tone,
                             "audio_url": None,
@@ -1769,7 +1711,7 @@ Core response rules:
 Rewrite the audit below as the exact public response to show on screen.
 
 Requirements:
-- Speak as Sophia, the LifeOS AI premium voice.
+- Speak as Sophia, the LifeOSAI Synthetic Artificial Intelligence premium voice.
 - {tone_instruction}
 - Do not read labels like Verdict, Main Risk, Better Move, Next Action, or Final Truth.
 - Do not mention markdown.
@@ -1813,8 +1755,8 @@ Audit:
                 200,
                 {
                     "ok": True,
-                    "reply": "LifeOS AI received your decision, but the intelligence engine could not complete the future outcome audit at this moment. Please try again shortly.",
-                    "voice": "LifeOS AI received your decision, but the intelligence engine could not complete the future outcome audit at this moment.",
+                    "reply": "Sophia received your decision, but the LifeOSAI intelligence engine could not complete the future outcome audit at this moment. Please try again shortly.",
+                    "voice": "Sophia received your decision, but the LifeOSAI intelligence engine could not complete the future outcome audit at this moment.",
                     "audit": "",
                     "tone": "system",
                     "audio_url": None,

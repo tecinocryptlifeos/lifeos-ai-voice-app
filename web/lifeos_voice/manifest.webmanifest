@@ -1,9 +1,9 @@
 {
-  "name": "LifeOS AI — Synthetic Decision Intelligence",
-  "short_name": "LifeOS AI",
-  "description": "Premium synthetic decision intelligence with text, voice input, and spoken output.",
+  "name": "LifeOSAI — Sophia Synthetic Artificial Intelligence",
+  "short_name": "LifeOSAI",
+  "description": "Sophia, the LifeOSAI Synthetic Artificial Intelligence assistant for decision chat and voice.",
   "id": "/",
-  "start_url": "/?source=pwa",
+  "start_url": "/chat?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],

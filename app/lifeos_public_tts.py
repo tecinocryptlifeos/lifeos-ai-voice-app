@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 import wave
@@ -26,14 +27,43 @@ def write_wav(path, pcm_data, channels=1, rate=24000, sample_width=2):
         wav_file.writeframes(pcm_data)
 
 
-def build_voice_prompt(text):
+IGBO_TEXT_PATTERN = re.compile(
+    r"[ịỊọỌụỤṅṄ]|\b(?:anyị|nke|bụ|gịnị|ọtụtụ|ụlọ|ndị|onye|ka|na|ga|maka)\b",
+    re.IGNORECASE,
+)
+
+
+def spoken_language(text, language_hint=None):
+    hint = str(language_hint or "").strip().lower()
+    if hint.startswith("ig"):
+        return "ig-NG"
+    if hint.startswith("en"):
+        return "en-GB"
+    return "ig-NG" if IGBO_TEXT_PATTERN.search(str(text or "")) else "en-GB"
+
+
+def build_voice_prompt(text, language_hint=None):
     clean = " ".join(str(text or "").replace("*", "").split())
+
+    if spoken_language(clean, language_hint) == "ig-NG":
+        delivery = (
+            "The transcript is Igbo from Nigeria. Use the best available clear, "
+            "natural Igbo pronunciation, phrasing, rhythm, and name preservation. "
+            "Do not apply a London-English accent to Igbo words and do not "
+            "translate or rewrite them. "
+        )
+    else:
+        delivery = (
+            "Use a calm, smooth, warm London English female executive-advisor "
+            "delivery. "
+        )
 
     return (
         "Read the following text exactly as written. "
         "Do not add words. Do not remove words. Do not summarize. "
-        "Do not rephrase. Use a calm, smooth, warm London English "
-        "female executive-advisor delivery. Use natural pauses, but "
+        "Do not rephrase. "
+        + delivery
+        + "Use natural pauses, but "
         "keep the wording exactly the same. Text to read: " + clean
     )
 
@@ -61,6 +91,7 @@ def generate_lifeos_voice_wav(
     text,
     output_path,
     voice_name=None,
+    language_hint=None,
     timeout=42,
 ):
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -74,7 +105,7 @@ def generate_lifeos_voice_wav(
         raise ValueError("Voice text is required")
 
     voice = voice_name or TTS_VOICE
-    prompt = build_voice_prompt(clean_text)
+    prompt = build_voice_prompt(clean_text, language_hint)
     last_error = None
 
     for model in _model_list():

@@ -86,9 +86,9 @@ class StandbyUnitTests(unittest.TestCase):
                 {"role": "user", "content": "u" * 1000},
             ]
         })
-        self.assertEqual([role for role, _ in cleaned], ["assistant", "user"])
-        self.assertEqual(len(cleaned[0][1]), 700)
-        self.assertEqual(len(cleaned[1][1]), 900)
+        self.assertEqual([item["role"] for item in cleaned], ["assistant", "user"])
+        self.assertEqual(len(cleaned[0]["content"]), 1000)
+        self.assertEqual(len(cleaned[1]["content"]), 1000)
         with self.assertRaisesRegex(ValueError, "user message"):
             standby.clean_messages({"messages": [{"role": "assistant", "content": "Only Sophia"}]})
 

@@ -186,7 +186,7 @@ class GrowthReadinessRuntimeTests(unittest.TestCase):
                 payload = json.loads(response.read().decode("utf-8"))
         self.assertEqual(
             payload["release"],
-            "lifeos-gemini31-resilient-live-v3.0.0-20260723",
+            "lifeos-sophia-language-app-shell-v3.1.0-20260812",
         )
         self.assertEqual(payload["final_public_origin"], FINAL_ORIGIN)
         self.assertTrue(payload["cost_free_warmup_ready"])

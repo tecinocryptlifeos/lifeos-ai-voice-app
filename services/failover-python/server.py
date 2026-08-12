@@ -31,6 +31,11 @@ from app.lifeos_auth_analytics import (  # noqa: E402
     public_config,
     verify_user,
 )
+from app.sophia_intelligence import (  # noqa: E402
+    SOPHIA_CHAT_SYSTEM_INSTRUCTION,
+    compact_chat_messages,
+    gemini_chat_contents,
+)
 
 
 RELEASE = "losai-northflank-standby-v1"
@@ -69,50 +74,7 @@ def valid_idempotency_key(headers) -> bool:
 
 def clean_messages(payload):
     messages = payload.get("messages") if isinstance(payload, dict) else None
-    if not isinstance(messages, list):
-        raise ValueError("Messages must be a list")
-    cleaned = []
-    excluded = (
-        "could not complete the continuation",
-        "under high demand",
-        "reviewing the decision thread",
-    )
-    for item in messages[-8:]:
-        if not isinstance(item, dict):
-            continue
-        role = str(item.get("role") or "").strip().lower()
-        content = str(item.get("content") or "").strip()
-        if role not in {"user", "assistant"} or not content:
-            continue
-        if any(fragment in content.lower() for fragment in excluded):
-            continue
-        cleaned.append((role, content[: 900 if role == "user" else 700]))
-    if not cleaned or not any(role == "user" for role, _ in cleaned):
-        raise ValueError("A user message is required")
-    return cleaned
-
-
-def chat_prompt(payload) -> str:
-    cleaned = clean_messages(payload)
-    latest_user = next(content for role, content in reversed(cleaned) if role == "user")
-    conversation = "\n".join(f"{role.upper()}: {content}" for role, content in cleaned)
-    return f"""
-You are Sophia, the LifeOS AI decision-intelligence assistant. Continue the
-conversation and answer the exact request in the user's current language.
-
-Latest user message:
-{latest_user}
-
-Compact conversation context:
-{conversation}
-
-Use Google Search when the answer depends on current facts. Separate verified
-facts from inference and uncertainty. For decisions, explain likely short- and
-long-term outcomes, the main risk, opportunity cost, safer alternative, and one
-practical next action. Never guarantee a future, profit, price, medical result,
-or legal result. Protect privacy. Use plain readable text, normally 90 to 220
-words, and finish the final sentence.
-""".strip()
+    return compact_chat_messages(messages)
 
 
 class StandbyHandler(BaseHTTPRequestHandler):
@@ -251,8 +213,13 @@ class StandbyHandler(BaseHTTPRequestHandler):
         if path == "/api/chat-decision":
             try:
                 payload = self.read_json()
+                messages = clean_messages(payload)
                 generated = GeminiClient().generate_grounded_text(
-                    chat_prompt(payload), timeout=18, retries=1, max_output_tokens=900
+                    timeout=18,
+                    retries=1,
+                    max_output_tokens=900,
+                    contents=gemini_chat_contents(messages),
+                    system_instruction=SOPHIA_CHAT_SYSTEM_INSTRUCTION,
                 )
                 sources = generated.get("sources") or []
                 self.send_json(200, {
