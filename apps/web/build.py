@@ -16,8 +16,8 @@ SOURCE = ROOT / "web" / "lifeos_voice"
 ACCOUNT = ROOT / "apps" / "web" / "account" / "index.html"
 PUBLIC_CONFIG = ROOT / "apps" / "web" / "public"
 DEFAULT_OUTPUT = ROOT / "dist" / "pages"
-FINAL_SITE_ORIGIN = "https://losai.ng.eu.org"
-FINAL_API_ORIGIN = "https://api.losai.ng.eu.org"
+FINAL_SITE_ORIGIN = "https://lifeosai.pages.dev"
+FINAL_API_ORIGIN = "https://losai-edge-gateway.lifeostecinoai.workers.dev"
 LEGACY_SITE_ORIGIN = "https://losai.onrender.com"
 
 ROUTES = {
@@ -164,9 +164,9 @@ def build(output: Path) -> None:
         ads_path.unlink()
 
     if site_origin == LEGACY_SITE_ORIGIN:
-        site_origin = FINAL_SITE_ORIGIN
+        site_origin = "https://lifeosai.pages.dev"
     if api_origin == LEGACY_SITE_ORIGIN:
-        api_origin = FINAL_API_ORIGIN
+        api_origin = "https://losai-edge-gateway.lifeostecinoai.workers.dev"
     legacy_hits = []
     for path in output.rglob("*"):
         if path.is_file() and path.suffix.lower() in {".html", ".js", ".xml", ".txt"}:
