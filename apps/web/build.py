@@ -163,6 +163,10 @@ def build(output: Path) -> None:
     elif ads_path.exists():
         ads_path.unlink()
 
+    if site_origin == LEGACY_SITE_ORIGIN:
+        site_origin = FINAL_SITE_ORIGIN
+    if api_origin == LEGACY_SITE_ORIGIN:
+        api_origin = FINAL_API_ORIGIN
     legacy_hits = []
     for path in output.rglob("*"):
         if path.is_file() and path.suffix.lower() in {".html", ".js", ".xml", ".txt"}:
