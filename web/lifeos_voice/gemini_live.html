@@ -1,6 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="lifeos-auth-pending">
 <head>
+
+<style id="lifeos-auth-prepaint-v1">
+html.lifeos-auth-pending body {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+html.lifeos-auth-ready body {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+</style>
+
+<script id="lifeos-auth-prepaint-start-v1">
+document.documentElement.classList.add("lifeos-auth-pending");
+</script>
+
 <script src="/assets/lifeos_api_gateway_v1.js?v=1.0.0"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">

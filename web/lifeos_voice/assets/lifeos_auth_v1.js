@@ -292,6 +292,8 @@
       }
       finishReady();
       render();
+      document.documentElement.classList.remove("lifeos-auth-pending");
+      document.documentElement.classList.add("lifeos-auth-ready");
       notifyAuthChange();
       if (state.session && profileComplete()) {
         void auditSignInOnce();
@@ -302,6 +304,8 @@
       state.config = state.config || { configured: false, auth_required: true };
       finishReady();
       render();
+      document.documentElement.classList.remove("lifeos-auth-pending");
+      document.documentElement.classList.add("lifeos-auth-ready");
       notifyAuthChange();
       setMessage(error.message || "The account system could not initialize.", "error");
       console.error(error);
