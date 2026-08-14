@@ -823,6 +823,36 @@ html.lifeos-voice-page-hidden .orb::after {
 }
 </style>
 <!-- LIFEOS_PASSWORD_VISIBILITY_V1:STYLE_END -->
+
+<style id="losai-voice-userbar-correction-v1">
+/* Final public voice header correction */
+.auth-userbar.protected {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto !important;
+  align-items: start !important;
+  gap: 8px !important;
+}
+
+.auth-userbar.protected #userIdentity {
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+  text-align: left !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+.auth-userbar.protected > span:last-child {
+  white-space: nowrap !important;
+}
+
+@media (max-width: 640px) {
+  body .auth-userbar.protected {
+    padding: 8px 10px 8px 84px !important;
+    min-height: 64px !important;
+  }
+}
+</style>
+
 </head>
 <body>
 <main>
@@ -889,7 +919,7 @@ html.lifeos-voice-page-hidden .orb::after {
 </section>
 
 <section id="voiceApp" data-lifeos-protected hidden>
-  <div class="auth-userbar protected"><span id="userIdentity"></span><span><a class="admin-link" href="/admin">Admin</a> · <button id="signOut" class="auth-link" type="button" hidden>Sign out</button></span></div>
+  <div class="auth-userbar protected"><span id="userIdentity"></span><span><button id="signOut" class="auth-link" type="button" hidden>Sign out</button></span></div>
 <div id="orb" class="orb" aria-hidden="true"></div>
   <button id="liveButton" class="primary" type="button">Start Live Conversation</button>
   <div class="controls" aria-label="Voice controls">

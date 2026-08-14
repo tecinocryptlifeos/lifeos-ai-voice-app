@@ -989,6 +989,73 @@ textarea{
 }
 </style>
 <!-- LIFEOS_PASSWORD_VISIBILITY_V1:STYLE_END -->
+
+<style id="losai-public-header-correction-v1">
+/* Final public chat header correction */
+.chat-account > #userIdentity {
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
+}
+
+@media (max-width: 640px) {
+  body .topbar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 8px !important;
+  }
+
+  body .brand {
+    min-width: 0 !important;
+  }
+
+  body .logo {
+    width: 48px !important;
+    height: 48px !important;
+    flex: 0 0 48px !important;
+  }
+
+  body .brand-sub {
+    white-space: normal !important;
+    font-size: 9px !important;
+    font-weight: 400 !important;
+    letter-spacing: .10em !important;
+    line-height: 1.3 !important;
+  }
+
+  body .chat-account {
+    width: 100% !important;
+    max-width: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255,255,255,.10) !important;
+    text-align: left !important;
+  }
+
+  body .chat-account > #userIdentity {
+    min-width: 0 !important;
+    font-size: 17px !important;
+    line-height: 1.2 !important;
+    font-weight: 700 !important;
+    color: var(--text) !important;
+    overflow-wrap: anywhere !important;
+    text-align: left !important;
+  }
+
+  body .chat-account-links {
+    flex: 0 0 auto !important;
+  }
+
+  body .hero {
+    display: none !important;
+  }
+}
+</style>
+
 </head>
 <body>
   <section id="authGate" class="chat-auth-gate" data-lifeos-auth-gate aria-labelledby="authTitle">
@@ -1052,7 +1119,7 @@ textarea{
             <div class="brand-sub">Sophia · Synthetic Artificial Intelligence</div>
           </div>
         </div>
-        <div class="chat-account"><span id="userIdentity"></span><span class="chat-account-links"><a href="/admin">Admin</a><button id="signOut" type="button" hidden>Sign out</button></span></div>
+        <div class="chat-account"><span id="userIdentity"></span><span class="chat-account-links"><button id="signOut" type="button" hidden>Sign out</button></span></div>
       </header>
 
       <section class="hero">
