@@ -1,0 +1,592 @@
+name: Build signed LOSAI Android test app
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - architecture/worker-chat-fallback
+    paths:
+      - ".github/workflows/android-twa-build.yml"
+      - "apps/android-twa/**"
+      - "web/lifeos_voice/.well-known/assetlinks.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: losai-android-twa-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-signed-android:
+    name: Build signed APK and AAB
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    env:
+      TWA_DIR: apps/android-twa
+      PACKAGE_ID: losia.htc.com
+      KEY_ALIAS: losai-upload
+      KEYSTORE_PATH: /tmp/losai-upload.jks
+      BUBBLEWRAP_ANDROID_SDK: /tmp/losai-bubblewrap-android-sdk
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Verify Android build environment
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          [ -n "${ANDROID_HOME:-}" ]
+          [ -d "$ANDROID_HOME/platforms/android-36" ]
+          [ -x "$ANDROID_HOME/build-tools/36.0.0/aapt" ]
+          [ -x "$ANDROID_HOME/build-tools/36.0.0/apksigner" ]
+
+          # Bubblewrap 1.24.1 internally uses Build Tools 34.0.0.
+          [ -x "$ANDROID_HOME/build-tools/34.0.0/zipalign" ]
+          [ -x "$ANDROID_HOME/build-tools/34.0.0/apksigner" ]
+
+          SDKMANAGER="$(
+            find "$ANDROID_HOME/cmdline-tools"               -type f               -name sdkmanager               -print               -quit
+          )"
+
+          [ -n "$SDKMANAGER" ]
+          [ -x "$SDKMANAGER" ]
+
+          echo "ANDROID_BUILD_ENVIRONMENT=PASS"
+
+      - name: Install and configure pinned Bubblewrap
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          npm install --global @bubblewrap/cli@1.24.1
+
+          rm -rf "$BUBBLEWRAP_ANDROID_SDK"
+          mkdir -p             "$BUBBLEWRAP_ANDROID_SDK"             "$HOME/.bubblewrap"
+
+          # Create an isolated SDK view. The real hosted SDK remains unchanged.
+          for sdk_entry in "$ANDROID_HOME"/*; do
+            [ -e "$sdk_entry" ] || continue
+
+            ln -s               "$sdk_entry"               "$BUBBLEWRAP_ANDROID_SDK/$(basename "$sdk_entry")"
+          done
+
+          SDKMANAGER="$(
+            find "$ANDROID_HOME/cmdline-tools"               -type f               -name sdkmanager               -print               -quit
+          )"
+
+          [ -n "$SDKMANAGER" ]
+          [ -x "$SDKMANAGER" ]
+
+          # Bubblewrap 1.24.1 expects sdkmanager under SDK_ROOT/bin.
+          rm -rf "$BUBBLEWRAP_ANDROID_SDK/bin"
+
+          ln -s             "$(dirname "$SDKMANAGER")"             "$BUBBLEWRAP_ANDROID_SDK/bin"
+
+          [ -x "$BUBBLEWRAP_ANDROID_SDK/bin/sdkmanager" ]
+          [ -d "$BUBBLEWRAP_ANDROID_SDK/build-tools/34.0.0" ]
+          [ -d "$BUBBLEWRAP_ANDROID_SDK/platforms/android-36" ]
+
+          export BUBBLEWRAP_ANDROID_SDK
+
+          python - <<'BUBBLEWRAP_CONFIG_PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config_path = (
+              Path.home()
+              / ".bubblewrap"
+              / "config.json"
+          )
+
+          config = {
+              "jdkPath": os.environ["JAVA_HOME"],
+              "androidSdkPath": os.environ[
+                  "BUBBLEWRAP_ANDROID_SDK"
+              ],
+          }
+
+          config_path.write_text(
+              json.dumps(config) + "\n",
+              encoding="utf-8",
+          )
+
+          print("BUBBLEWRAP_CONFIG=PASS")
+          BUBBLEWRAP_CONFIG_PY
+
+          bubblewrap doctor
+          bubblewrap --version
+
+      - name: Validate repository signing contract
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          package_id = "losia.htc.com"
+
+          manifest = json.loads(
+              Path(
+                  "apps/android-twa/twa-manifest.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          assetlinks = json.loads(
+              Path(
+                  "web/lifeos_voice/.well-known/"
+                  "assetlinks.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          if manifest.get("packageId") != package_id:
+              raise SystemExit(
+                  "Unexpected TWA package ID"
+              )
+
+          target = assetlinks[0]["target"]
+
+          if target.get("package_name") != package_id:
+              raise SystemExit(
+                  "Unexpected Digital Asset Links "
+                  "package ID"
+              )
+
+          fingerprints = target.get(
+              "sha256_cert_fingerprints"
+          )
+
+          if (
+              not isinstance(fingerprints, list) or
+              len(fingerprints) != 1
+          ):
+              raise SystemExit(
+                  "Exactly one signing fingerprint "
+                  "is required"
+              )
+
+          print("REPOSITORY_SIGNING_CONTRACT=PASS")
+          PY
+
+      - name: Verify protected signing secrets
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.LOSAI_ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.LOSAI_ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.LOSAI_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -Eeuo pipefail
+
+          [ -n "$KEYSTORE_BASE64" ] || {
+            echo "Missing LOSAI_ANDROID_KEYSTORE_BASE64"
+            exit 1
+          }
+
+          [ -n "$KEYSTORE_PASSWORD" ] || {
+            echo "Missing LOSAI_ANDROID_KEYSTORE_PASSWORD"
+            exit 1
+          }
+
+          [ -n "$KEY_PASSWORD" ] || {
+            echo "Missing LOSAI_ANDROID_KEY_PASSWORD"
+            exit 1
+          }
+
+          echo "PROTECTED_SIGNING_SECRETS=AVAILABLE"
+
+      - name: Restore protected signing keystore
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.LOSAI_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+
+          printf '%s' "$KEYSTORE_BASE64" |
+            base64 --decode > "$KEYSTORE_PATH"
+
+          chmod 600 "$KEYSTORE_PATH"
+
+          [ -s "$KEYSTORE_PATH" ] || {
+            echo "Decoded keystore is empty"
+            exit 1
+          }
+
+          echo "SIGNING_KEYSTORE_RESTORED=PASS"
+
+      - name: Verify keystore certificate
+        shell: bash
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.LOSAI_ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -Eeuo pipefail
+
+          ACTUAL_FINGERPRINT="$(
+            keytool \
+              -exportcert \
+              -rfc \
+              -alias "$KEY_ALIAS" \
+              -keystore "$KEYSTORE_PATH" \
+              -storepass:env BUBBLEWRAP_KEYSTORE_PASSWORD |
+            openssl x509 \
+              -noout \
+              -fingerprint \
+              -sha256 |
+            awk -F= '{print toupper($2)}'
+          )"
+
+          EXPECTED_FINGERPRINT="$(
+            python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path(
+                  "web/lifeos_voice/.well-known/"
+                  "assetlinks.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          print(
+              data[0]["target"][
+                  "sha256_cert_fingerprints"
+              ][0]
+          )
+          PY
+          )"
+
+          [ "$ACTUAL_FINGERPRINT" = \
+            "$EXPECTED_FINGERPRINT" ] || {
+            echo "Signing certificate mismatch"
+            exit 1
+          }
+
+          echo "SIGNING_CERTIFICATE=PASS"
+
+      - name: Generate Android project
+        shell: bash
+        working-directory: apps/android-twa
+        run: |
+          set -Eeuo pipefail
+
+          CI_MANIFEST="$PWD/twa-manifest.ci.json"
+          ASSET_LOG="/tmp/losai-twa-assets.log"
+          ASSET_PORT="8765"
+
+          python - \
+            "$PWD/twa-manifest.json" \
+            "$CI_MANIFEST" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          source = Path(sys.argv[1])
+          destination = Path(sys.argv[2])
+
+          manifest = json.loads(
+              source.read_text(encoding="utf-8")
+          )
+
+          if manifest.get("host") != "lifeosai.pages.dev":
+              raise SystemExit(
+                  "Unexpected trusted host"
+              )
+
+          if (
+              manifest.get("startUrl")
+              != "/chat?source=android-twa"
+          ):
+              raise SystemExit(
+                  "Unexpected Android start URL"
+              )
+
+          local_origin = "http://127.0.0.1:8765"
+
+          manifest["iconUrl"] = (
+              local_origin
+              + "/icons/lifeos-icon-512.png"
+          )
+
+          manifest["maskableIconUrl"] = (
+              local_origin
+              + "/icons/"
+              + "lifeos-icon-maskable-512.png"
+          )
+
+          manifest["webManifestUrl"] = (
+              local_origin
+              + "/manifest.webmanifest"
+          )
+
+          destination.write_text(
+              json.dumps(manifest, indent=2) + "\n",
+              encoding="utf-8",
+          )
+
+          print("CI_BUILD_MANIFEST_CREATED=PASS")
+          print("TRUSTED_HOST_UNCHANGED=PASS")
+          print("START_URL_UNCHANGED=PASS")
+          PY
+
+          python -m http.server \
+            "$ASSET_PORT" \
+            --bind 127.0.0.1 \
+            --directory \
+            "$GITHUB_WORKSPACE/web/lifeos_voice" \
+            >"$ASSET_LOG" 2>&1 &
+
+          ASSET_SERVER_PID=$!
+
+          stop_asset_server() {
+            kill "$ASSET_SERVER_PID" \
+              >/dev/null 2>&1 || true
+
+            wait "$ASSET_SERVER_PID" \
+              >/dev/null 2>&1 || true
+          }
+
+          trap stop_asset_server EXIT
+
+          python - <<'PY'
+          import time
+          import urllib.request
+
+          urls = (
+              "http://127.0.0.1:8765/"
+              "manifest.webmanifest",
+              "http://127.0.0.1:8765/icons/"
+              "lifeos-icon-512.png",
+              "http://127.0.0.1:8765/icons/"
+              "lifeos-icon-maskable-512.png",
+          )
+
+          for attempt in range(30):
+              try:
+                  for url in urls:
+                      with urllib.request.urlopen(
+                          url,
+                          timeout=2,
+                      ) as response:
+                          if response.status != 200:
+                              raise RuntimeError(
+                                  f"{url}: "
+                                  f"{response.status}"
+                              )
+
+                  print("LOCAL_TWA_ASSETS=PASS")
+                  break
+
+              except Exception:
+                  if attempt == 29:
+                      raise
+
+                  time.sleep(0.5)
+          PY
+
+          bubblewrap update \
+            --skipVersionUpgrade \
+            --manifest="$CI_MANIFEST"
+
+          stop_asset_server
+          trap - EXIT
+
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("app/build.gradle")
+
+          text = path.read_text(encoding="utf-8")
+
+          local_url = (
+              "http://127.0.0.1:8765/"
+              "manifest.webmanifest"
+          )
+
+          production_url = (
+              "https://lifeosai.pages.dev/"
+              "manifest.webmanifest"
+          )
+
+          if text.count(local_url) != 1:
+              raise SystemExit(
+                  "Generated Web Manifest URL "
+                  "was not found exactly once"
+              )
+
+          path.write_text(
+              text.replace(
+                  local_url,
+                  production_url,
+                  1,
+              ),
+              encoding="utf-8",
+          )
+
+          print(
+              "PRODUCTION_WEB_MANIFEST_URL_RESTORED=PASS"
+          )
+          PY
+
+          grep -Fq \
+            "hostName: 'lifeosai.pages.dev'" \
+            app/build.gradle
+
+          grep -Fq \
+            "launchUrl: '/chat?source=android-twa'" \
+            app/build.gradle
+
+          grep -Fq \
+            "resValue \"string\", \"webManifestUrl\", 'https://lifeosai.pages.dev/manifest.webmanifest'" \
+            app/build.gradle
+
+          echo "GENERATED_TRUSTED_HOST=PASS"
+          echo "GENERATED_START_URL=PASS"
+          echo "ANDROID_PROJECT_GENERATED=PASS"
+
+      - name: Build signed APK and AAB
+        shell: bash
+        working-directory: apps/android-twa
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.LOSAI_ANDROID_KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.LOSAI_ANDROID_KEY_PASSWORD }}
+        run: |
+          set -Eeuo pipefail
+
+          export ANDROID_HOME="$BUBBLEWRAP_ANDROID_SDK"
+          export ANDROID_SDK_ROOT="$BUBBLEWRAP_ANDROID_SDK"
+
+          [ "$ANDROID_HOME" = "$ANDROID_SDK_ROOT" ]
+
+          bubblewrap build \
+            --manifest="$PWD/twa-manifest.ci.json" \
+            --signingKeyPath="$KEYSTORE_PATH" \
+            --signingKeyAlias="$KEY_ALIAS"
+
+          test -s app-release-signed.apk
+          test -s app-release-bundle.aab
+
+          echo "SIGNED_ANDROID_BUILD=PASS"
+
+      - name: Verify APK identity and signature
+        shell: bash
+        working-directory: apps/android-twa
+        run: |
+          set -Eeuo pipefail
+
+          AAPT="$ANDROID_HOME/build-tools/36.0.0/aapt"
+          APKSIGNER="$ANDROID_HOME/build-tools/36.0.0/apksigner"
+
+          BADGING="$(
+            "$AAPT" dump badging app-release-signed.apk
+          )"
+
+          APP_ID="$(
+            printf '%s\n' "$BADGING" |
+              sed -n \
+                "s/^package: name='\([^']*\)'.*/\1/p"
+          )"
+
+          TARGET_SDK="$(
+            printf '%s\n' "$BADGING" |
+              sed -n \
+                "s/^targetSdkVersion:'\([^']*\)'.*/\1/p"
+          )"
+
+          [ "$APP_ID" = "$PACKAGE_ID" ] || {
+            echo "Unexpected APK package ID: $APP_ID"
+            exit 1
+          }
+
+          [ -n "$TARGET_SDK" ] || {
+            echo "APK target SDK could not be read"
+            exit 1
+          }
+
+          "$APKSIGNER" \
+            verify \
+            --verbose \
+            --print-certs \
+            app-release-signed.apk \
+            > signing-report.txt
+
+          EXPECTED_CERT="$(
+            python - <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path(
+                  "../../web/lifeos_voice/.well-known/"
+                  "assetlinks.json"
+              ).read_text(encoding="utf-8")
+          )
+
+          print(
+              data[0]["target"][
+                  "sha256_cert_fingerprints"
+              ][0].replace(":", "").upper()
+          )
+          PY
+          )"
+
+          APK_CERT="$(
+            awk -F': ' \
+              '/Signer #1 certificate SHA-256 digest:/ {
+                print toupper($2)
+                exit
+              }' \
+              signing-report.txt |
+            tr -d ':'
+          )"
+
+          [ "$APK_CERT" = "$EXPECTED_CERT" ] || {
+            echo "APK certificate does not match"
+            exit 1
+          }
+
+          sha256sum \
+            app-release-signed.apk \
+            app-release-bundle.aab \
+            > SHA256SUMS
+
+          printf 'APK_PACKAGE_ID=%s\n' "$APP_ID"
+          printf 'APK_TARGET_SDK=%s\n' "$TARGET_SDK"
+          echo "APK_SIGNATURE=PASS"
+
+      - name: Upload signed test artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: losai-android-signed-${{ github.run_number }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            apps/android-twa/app-release-signed.apk
+            apps/android-twa/app-release-bundle.aab
+            apps/android-twa/SHA256SUMS
+            apps/android-twa/signing-report.txt
+            apps/android-twa/twa-manifest.json
+            web/lifeos_voice/.well-known/assetlinks.json
+
+      - name: Remove restored keystore
+        if: always()
+        shell: bash
+        run: |
+          rm -f "$KEYSTORE_PATH"
+          echo "RUNNER_KEYSTORE_REMOVED=PASS"

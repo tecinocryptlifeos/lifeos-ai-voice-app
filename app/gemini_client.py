@@ -152,16 +152,31 @@ class GeminiClient:
         payload, _model = self._request(body, timeout, retries)
         return self._extract_text(payload)
 
-    def generate_grounded_text(self, prompt, timeout=12, retries=1, max_output_tokens=900):
-        """Generate an answer that may use Google Search and return safe source links."""
+    def generate_grounded_text(
+        self,
+        prompt=None,
+        timeout=12,
+        retries=1,
+        max_output_tokens=900,
+        *,
+        contents=None,
+        system_instruction=None,
+    ):
+        """Generate grounded text from a prompt or native multi-turn contents."""
         prompt = str(prompt or "").strip()
-        if not prompt:
-            raise ValueError("Prompt is required")
+        if contents is None:
+            if not prompt:
+                raise ValueError("Prompt is required")
+            request_contents = [{"role": "user", "parts": [{"text": prompt}]}]
+        else:
+            if not isinstance(contents, list) or not contents:
+                raise ValueError("Contents must be a non-empty list")
+            request_contents = contents
 
         timeout = min(int(timeout or 12), 20)
         retries = max(int(retries or 1), 1)
         body = {
-            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "contents": request_contents,
             "tools": [{"google_search": {}}],
             "generationConfig": {
                 "temperature": 0.35,
@@ -170,6 +185,11 @@ class GeminiClient:
                 "thinkingConfig": {"thinkingBudget": 1024},
             },
         }
+        instruction = str(system_instruction or "").strip()
+        if instruction:
+            body["systemInstruction"] = {
+                "parts": [{"text": instruction}],
+            }
         configured_models = [
             item.strip()
             for item in os.environ.get(

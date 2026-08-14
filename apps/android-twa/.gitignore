@@ -1,0 +1,20 @@
+# Generated Android and Gradle files
+.gradle/
+build/
+app/build/
+decompressed/
+local.properties
+node_modules/
+
+# Generated packages
+*.apk
+*.aab
+*.apks
+
+# Signing material — never commit
+*.jks
+*.keystore
+signing-key.jks
+
+# Logs
+npm-debug.log*

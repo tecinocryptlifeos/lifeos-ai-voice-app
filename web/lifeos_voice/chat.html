@@ -26,7 +26,7 @@ html.lifeos-voice-route-pending-v1 body {
   <meta charset="UTF-8" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LifeOS AI — Decision Chat</title>
+  <title>Sophia — LifeOSAI Decision Chat</title>
   <style>
     :root {
       --bg: #050508;
@@ -549,6 +549,28 @@ html.lifeos-voice-route-pending-v1 body {
     animation: lifeosMicPulse 1.25s ease-in-out infinite;
   }
 
+  .lifeos-speech-language {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 6px 9px;
+    border: 1px solid rgba(244, 199, 93, 0.32);
+    border-radius: 12px;
+    color: #fff0c4;
+    background: rgba(7, 13, 21, 0.72);
+    font-size: 11px;
+    font-weight: 800;
+  }
+
+  .lifeos-speech-language select {
+    min-width: 118px;
+    border: 0;
+    color: #fff7df;
+    background: #10151d;
+    font: inherit;
+  }
+
   .lifeos-mic-button.unsupported,
   .lifeos-mic-button:disabled {
     opacity: 0.38;
@@ -1026,8 +1048,8 @@ textarea{
         <div class="brand">
           <div class="logo"><a class="lifeos-home-logo-link-v1" href="/" aria-label="Return to the LifeOS homepage"><img src="/assets/lifeos-logo-2026.png" alt="LifeOS logo"></a></div>
           <div>
-            <div class="brand-title">LifeOS AI</div>
-            <div class="brand-sub">Decision Chat</div>
+            <div class="brand-title">LifeOSAI</div>
+            <div class="brand-sub">Sophia · Synthetic Artificial Intelligence</div>
           </div>
         </div>
         <div class="chat-account"><span id="userIdentity"></span><span class="chat-account-links"><a href="/admin">Admin</a><button id="signOut" type="button" hidden>Sign out</button></span></div>
@@ -1051,6 +1073,14 @@ textarea{
   type="button"
   aria-pressed="false"
 >Voice: Off</button>
+          <label class="lifeos-speech-language" for="speechLanguage">
+            <span>Speech</span>
+            <select id="speechLanguage" aria-label="Speech recognition language">
+              <option value="auto">Auto</option>
+              <option value="en-NG">English (Nigeria)</option>
+              <option value="ig-NG">Igbo (Nigeria)</option>
+            </select>
+          </label>
         </div>
         <div id="history" class="history"></div>
         <div id="messages" class="messages"></div>
@@ -1096,6 +1126,7 @@ const input = document.getElementById("input");
 const sendBtn = document.getElementById("sendBtn");
 const micBtn = document.getElementById("micBtn");
 const voiceModeBtn = document.getElementById("voiceModeBtn");
+const speechLanguageSelect = document.getElementById("speechLanguage");
 let lifeosVoicePlayer = document.getElementById("lifeosVoicePlayer");
 document.addEventListener("DOMContentLoaded", () => {
   if (!lifeosVoicePlayer) {
@@ -1109,8 +1140,45 @@ const historyBox = document.getElementById("history");
 
 const STORE = "lifeos_decision_chat_v1";
 const THREADS = "lifeos_decision_threads_v1";
+const SPEECH_LANGUAGE_STORE = "lifeos_speech_language_v1";
+const LIFEOS_IGBO_TEXT = /[ịỊọỌụỤṅṄ]|\b(?:anyị|gịnị|nke|bụ|ọtụtụ|ụlọ|ndị|onye|maka)\b/iu;
 
 let current = JSON.parse(localStorage.getItem(STORE) || "[]");
+
+function inferLifeOSLanguage(text = "") {
+  return LIFEOS_IGBO_TEXT.test(String(text || "")) ? "ig-NG" : "en-NG";
+}
+
+function currentSpeechLanguage(text = "") {
+  const selected = speechLanguageSelect?.value || "auto";
+  if (selected === "ig-NG" || selected === "en-NG") return selected;
+
+  const contextualText = String(text || "").trim() ||
+    [...current].reverse().find(message => message?.role === "user")?.content ||
+    "";
+
+  if (contextualText) return inferLifeOSLanguage(contextualText);
+  return /^ig(?:-|$)/i.test(navigator.language || "") ? "ig-NG" : "en-NG";
+}
+
+function applySpeechRecognitionLanguage(text = "") {
+  const language = currentSpeechLanguage(text);
+  if (lifeosRecognition) lifeosRecognition.lang = language;
+  return language;
+}
+
+if (speechLanguageSelect) {
+  const requestedLanguage = new URLSearchParams(location.search).get("lang");
+  const storedLanguage = localStorage.getItem(SPEECH_LANGUAGE_STORE) || "auto";
+  speechLanguageSelect.value = ["auto", "en-NG", "ig-NG"].includes(requestedLanguage)
+    ? requestedLanguage
+    : (["auto", "en-NG", "ig-NG"].includes(storedLanguage) ? storedLanguage : "auto");
+
+  speechLanguageSelect.addEventListener("change", () => {
+    localStorage.setItem(SPEECH_LANGUAGE_STORE, speechLanguageSelect.value);
+    applySpeechRecognitionLanguage(input.value);
+  });
+}
 
 function save() {
   localStorage.setItem(STORE, JSON.stringify(current));
@@ -1175,7 +1243,7 @@ async function sendMessage(voiceTriggered = false) {
 
   const loading = {
     role: "assistant",
-    content: "LifeOS AI is reviewing the decision thread..."
+    content: "Sophia is reviewing the decision thread..."
   };
 
   current.push(loading);
@@ -1189,12 +1257,12 @@ async function sendMessage(voiceTriggered = false) {
         m.content &&
         !m.content.includes("reviewing the decision thread")
       )
-      .slice(-8)
+      .slice(-12)
       .map(m => ({
         role: m.role,
         content: String(m.content || "").slice(
           0,
-          m.role === "assistant" ? 700 : 900
+          m.role === "assistant" ? 1000 : 1400
         )
       }));
 
@@ -1214,7 +1282,7 @@ async function sendMessage(voiceTriggered = false) {
     } catch (error) {}
 
     loading.content = data.reply || data.error ||
-      "LifeOS AI could not complete the continuation. Please try again.";
+      "Sophia could not complete the continuation. Please try again.";
     loading.sources = Array.isArray(data.sources) ? data.sources.slice(0, 5) : [];
     if (response.ok) {
       void window.LifeOSAuth.event("chat_message", {
@@ -1224,7 +1292,7 @@ async function sendMessage(voiceTriggered = false) {
 
   } catch (error) {
     loading.content =
-      "LifeOS AI could not reach the intelligence server. Please try again.";
+      "Sophia could not reach the intelligence server. Please try again.";
   }
   lifeosChatController = null;
 
@@ -1412,6 +1480,7 @@ function startLifeOSListen() {
   lifeosOriginalInput = "";
 
   try {
+    applySpeechRecognitionLanguage(input.value);
     lifeosRecognition.start();
   } catch (error) {
     scheduleLifeOSListen(900);
@@ -1490,6 +1559,7 @@ function browserVoiceFallback(text) {
 
     const token = ++lifeosSpeechSequenceToken;
     const voices = window.speechSynthesis.getVoices();
+    const language = currentSpeechLanguage(text);
     let index = 0;
     let settled = false;
 
@@ -1527,12 +1597,13 @@ function browserVoiceFallback(text) {
 
       const utterance = new SpeechSynthesisUtterance(chunks[index]);
 
-      utterance.voice =
-        voices.find(voice => /^en-GB/i.test(voice.lang)) ||
-        voices.find(voice => /^en/i.test(voice.lang)) ||
-        null;
+      utterance.voice = language === "ig-NG"
+        ? voices.find(voice => /^ig(?:-|$)/i.test(voice.lang)) || null
+        : voices.find(voice => /^en-GB/i.test(voice.lang)) ||
+          voices.find(voice => /^en/i.test(voice.lang)) ||
+          null;
 
-      utterance.lang = utterance.voice?.lang || "en-GB";
+      utterance.lang = utterance.voice?.lang || language;
       utterance.rate = 0.94;
       utterance.pitch = 1;
       utterance.volume = 1;
@@ -1592,7 +1663,10 @@ async function speakLifeOS(text) {
       response = await window.LifeOSAuth.authFetch("/api/voice-read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: spokenText }),
+        body: JSON.stringify({
+          text: spokenText,
+          language: currentSpeechLanguage(spokenText)
+        }),
         signal: voiceController ? voiceController.signal : undefined
       });
     } finally {
@@ -1681,7 +1755,7 @@ if (!LifeOSSpeechRecognition) {
 } else {
   lifeosRecognition = new LifeOSSpeechRecognition();
 
-  lifeosRecognition.lang = "en-NG";
+  lifeosRecognition.lang = currentSpeechLanguage();
   lifeosRecognition.continuous = false;
   lifeosRecognition.interimResults = true;
   lifeosRecognition.maxAlternatives = 1;
@@ -1795,6 +1869,7 @@ if (!LifeOSSpeechRecognition) {
         return;
       }
 
+      applySpeechRecognitionLanguage(input.value);
       lifeosRecognition.start();
     } catch (error) {
       setLifeOSMicState(false, "Start voice input");
@@ -2452,11 +2527,6 @@ body.lifeos-vc-on #lifeosVC{display:flex}
         if (selectedVoice) {
           utterance.voice = selectedVoice;
           utterance.lang = selectedVoice.lang;
-
-          if (lifeosRecognition) {
-            lifeosRecognition.lang =
-              selectedVoice.lang;
-          }
         }
 
         utterance.addEventListener(
@@ -2531,10 +2601,6 @@ body.lifeos-vc-on #lifeosVC{display:flex}
       (voice) =>
         voice.voiceURI === selectedVoiceURI
     );
-
-    if (selectedVoice && lifeosRecognition) {
-      lifeosRecognition.lang = selectedVoice.lang;
-    }
 
     setStatus(
       "ACCENT UPDATED",
@@ -3258,7 +3324,9 @@ header img:first-of-type {
     );
 
     const openHomepage = () => {
-      window.location.assign("/");
+      window.location.assign(
+        window.LifeOSAppShell?.homeUrl || "/"
+      );
     };
 
     logo.addEventListener(
@@ -3320,7 +3388,9 @@ img[src*="lifeos-logo-transparent.webp"]:not(#lifeosVCLogo) {
       event.stopPropagation();
     }
 
-    window.location.assign("/");
+    window.location.assign(
+      window.LifeOSAppShell?.homeUrl || "/"
+    );
   };
 
   const install = () => {
@@ -3562,7 +3632,7 @@ html body #chatApp .msg.lifeos-revealing::after{content:"";display:inline-block;
 <script src="/assets/lifeos_auth_v1.js?v=2.1.0"></script>
 <script src="/assets/lifeos_account_runtime_bridge_v2_1_1.js?v=2.1.1-20260723"></script>
 <!-- LOSAI_ACCOUNT_RUNTIME_BRIDGE_V2_1_1 -->
-<script src="/assets/lifeos_pwa_v1.js?v=2.0.6" defer></script>
+<script src="/assets/lifeos_pwa_v1.js?v=3.1.0" defer></script>
   <script src="/assets/lifeos_account_layout_fix_v1.js?v=1.0.0" defer></script>
 <!-- LIFEOS_PASSWORD_VISIBILITY_V1:SCRIPT_START -->
 <script>

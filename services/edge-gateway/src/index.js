@@ -12,6 +12,7 @@ import {
   responseHeaders,
 } from "./policy.js";
 import { geminiStatus, issueGeminiToken } from "./gemini.js";
+import { issueChatDecision } from "./chat.js";
 import { currentOriginState, evaluateOrigins, originUrls } from "./health.js";
 import { publicConfig, verifySession } from "./supabase.js";
 
@@ -145,6 +146,29 @@ async function handleRequest(request, env) {
     const idempotencyKey = requireIdempotencyKey(request);
     const session = await verifySession(request, env, { profile: "required" });
     return jsonResponse(request, env, 200, await issueGeminiToken(request, env, session, idempotencyKey));
+  }
+
+  // LOSAI_WORKER_CHAT_FALLBACK_V2_ROUTE
+  if (request.method === "POST" && pathname === "/api/chat-decision") {
+    const idempotencyKey = requireIdempotencyKey(request);
+    const session = await verifySession(request, env, { profile: "required" });
+    const state = await currentOriginState(env);
+
+    if (state.render?.healthy) {
+      return compatibilityProxy(request, env, pathname, state);
+    }
+
+    return jsonResponse(
+      request,
+      env,
+      200,
+      await issueChatDecision(
+        request,
+        env,
+        session,
+        idempotencyKey,
+      ),
+    );
   }
 
   if (pathname === "/api/account-profile" && ["GET", "POST"].includes(request.method)) {
