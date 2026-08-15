@@ -34,7 +34,7 @@ FALLBACK_MODEL = os.environ.get(
 MODEL = PRIMARY_MODEL
 WEBSOCKET_URL = (
     "wss://generativelanguage.googleapis.com/ws/"
-    "google.ai.generativelanguage.v1alpha.GenerativeService."
+    "google.ai.generativelanguage.v1beta.GenerativeService."
     "BidiGenerateContentConstrained"
 )
 
@@ -123,7 +123,7 @@ def create_gemini_live_token(
     now = datetime.datetime.now(datetime.timezone.utc)
     client = genai.Client(
         api_key=api_key,
-        http_options=types.HttpOptions(api_version="v1alpha"),
+        http_options=types.HttpOptions(api_version="v1beta"),
     )
 
     try:
@@ -143,7 +143,7 @@ def create_gemini_live_token(
                     },
                 },
                 "lock_additional_fields": [],
-                "http_options": {"api_version": "v1alpha"},
+                "http_options": {"api_version": "v1beta"},
             }
         )
         token_name = str(getattr(token, "name", "") or "").strip()
