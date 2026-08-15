@@ -172,9 +172,28 @@
 
     setMode(state.mode, false);
     const identity = $("userIdentity");
-    if (identity) identity.textContent = isAuthenticated
-      ? state.session.user.user_metadata?.full_name || state.session.user.email || "Signed in"
-      : "";
+    if (identity) {
+      const metadata = state.session?.user?.user_metadata || {};
+      const profile = state.profile?.profile || {};
+
+      if (identity.dataset.lifeosIdentity === "surname") {
+        const surname =
+          profile.surname ||
+          metadata.surname ||
+          String(metadata.full_name || "")
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(-1)[0] ||
+          "User";
+
+        identity.textContent = isAuthenticated ? surname : "";
+      } else {
+        identity.textContent = isAuthenticated
+          ? metadata.full_name || state.session.user.email || "Signed in"
+          : "";
+      }
+    }
     show($("signOut"), isComplete);
     if ($("googleSignIn")) $("googleSignIn").disabled = !googleEnabled;
 

@@ -1199,7 +1199,13 @@ textarea{
             <div class="brand-sub">Sophia · Synthetic Artificial Intelligence</div>
           </div>
         </div>
-        <div class="chat-account"><span id="userIdentity"></span><span class="chat-account-links"><button id="signOut" type="button" hidden>Sign out</button></span></div>
+        <div class="chat-account">
+          <div class="lifeos-user-welcome">
+            <span class="lifeos-welcome-label">Welcome</span>
+            <span id="userIdentity" data-lifeos-identity="surname"></span>
+          </div>
+          <span class="chat-account-links"><button id="signOut" type="button" hidden>Sign out</button></span>
+        </div>
       </header>
 
       <section class="hero">
@@ -1260,8 +1266,8 @@ textarea{
         </div>
       </section>
 
-      <footer>
-        LifeOS Synthetic Artificial Intelligence (LOSAI) helps you see the future outcome of a decision before you act. Powered by Hansafrique LTD, LifeOS Daily, and Tecino’s Channel. © 2026
+      <footer class="lifeos-minimal-footer">
+        LOSAI · Powered by Hansafrique LTD, LifeOS Daily and Tecino’s Channel · © 2026
       </footer>
     </section>
   </main>
@@ -3804,5 +3810,423 @@ html body #chatApp .msg.lifeos-revealing::after{content:"";display:inline-block;
 })();
 </script>
 <!-- LIFEOS_PASSWORD_VISIBILITY_V1:SCRIPT_END -->
+
+<style id="lifeos-premium-chat-menu-v1">
+
+/* ===== Header ===== */
+
+#chatApp .lifeos-menu-toggle {
+  width:44px !important;
+  height:44px !important;
+  min-width:44px !important;
+  min-height:44px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  border:1px solid rgba(243,201,105,.34) !important;
+  border-radius:13px !important;
+  background:rgba(7,8,12,.72) !important;
+  color:#f3c969 !important;
+  font-size:25px !important;
+  font-weight:400 !important;
+  line-height:1 !important;
+  box-shadow:none !important;
+  backdrop-filter:blur(12px);
+  cursor:pointer;
+}
+
+#chatApp .lifeos-user-welcome {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:flex-end !important;
+  justify-content:center !important;
+  gap:1px !important;
+  min-width:0 !important;
+}
+
+#chatApp .lifeos-welcome-label {
+  display:block !important;
+  font-size:9px !important;
+  line-height:1.1 !important;
+  letter-spacing:.14em !important;
+  text-transform:uppercase !important;
+  font-weight:500 !important;
+  color:rgba(246,240,223,.48) !important;
+}
+
+#chatApp .lifeos-user-welcome #userIdentity {
+  display:block !important;
+  font-size:16px !important;
+  line-height:1.15 !important;
+  font-weight:750 !important;
+  color:var(--text) !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+  max-width:130px !important;
+}
+
+#chatApp .chat-account {
+  width:auto !important;
+  max-width:150px !important;
+  flex-direction:row !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+  gap:7px !important;
+  padding:0 !important;
+  border:0 !important;
+  text-align:right !important;
+}
+
+/* ===== Menu backdrop ===== */
+
+#lifeosChatMenuBackdrop {
+  position:fixed !important;
+  inset:0 !important;
+  z-index:2147483600 !important;
+  background:rgba(0,0,0,.58) !important;
+  backdrop-filter:blur(3px);
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .20s ease, visibility .20s ease;
+}
+
+#lifeosChatMenuBackdrop.open {
+  opacity:1;
+  visibility:visible;
+}
+
+/* ===== Side menu ===== */
+
+#lifeosChatMenuDrawer {
+  position:fixed !important;
+  top:0 !important;
+  left:0 !important;
+  bottom:0 !important;
+  z-index:2147483601 !important;
+  width:min(82vw,320px) !important;
+  padding:
+    max(18px,env(safe-area-inset-top))
+    16px
+    max(18px,env(safe-area-inset-bottom)) !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(10,11,16,.985),
+      rgba(4,5,8,.995)
+    ) !important;
+  border-right:1px solid rgba(243,201,105,.25) !important;
+  box-shadow:24px 0 70px rgba(0,0,0,.58) !important;
+  transform:translateX(-105%);
+  transition:transform .24s ease;
+  overflow-y:auto !important;
+}
+
+#lifeosChatMenuDrawer.open {
+  transform:translateX(0);
+}
+
+.lifeos-menu-heading {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:2px 2px 16px;
+  margin-bottom:12px;
+  border-bottom:1px solid rgba(255,255,255,.09);
+}
+
+.lifeos-menu-heading-text {
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+
+.lifeos-menu-heading-title {
+  color:#f3c969;
+  font-size:15px;
+  font-weight:850;
+  letter-spacing:.02em;
+}
+
+.lifeos-menu-heading-subtitle {
+  color:rgba(246,240,223,.48);
+  font-size:10px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+#lifeosChatMenuClose {
+  width:38px !important;
+  height:38px !important;
+  min-width:38px !important;
+  min-height:38px !important;
+  padding:0 !important;
+  border-radius:12px !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  background:rgba(255,255,255,.05) !important;
+  color:#f6f0df !important;
+  font-size:21px !important;
+}
+
+/* Existing controls, now displayed inside menu */
+
+#lifeosChatMenuDrawer .tools {
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:9px !important;
+  width:100% !important;
+}
+
+#lifeosChatMenuDrawer .tools .tool {
+  width:100% !important;
+  min-height:48px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  flex:none !important;
+  padding:12px 14px !important;
+  border-radius:13px !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  background:rgba(255,255,255,.055) !important;
+  color:#f6f0df !important;
+  font-size:13px !important;
+  font-weight:650 !important;
+  text-align:left !important;
+}
+
+#lifeosChatMenuDrawer .tools .tool:active {
+  background:rgba(243,201,105,.13) !important;
+  border-color:rgba(243,201,105,.35) !important;
+}
+
+#lifeosChatMenuDrawer .lifeos-speech-language {
+  width:100% !important;
+  display:grid !important;
+  grid-template-columns:auto 1fr !important;
+  gap:12px !important;
+  align-items:center !important;
+  min-height:48px !important;
+  padding:9px 12px !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  border-radius:13px !important;
+  background:rgba(255,255,255,.055) !important;
+}
+
+#lifeosChatMenuDrawer .lifeos-speech-language > span {
+  color:#f6f0df !important;
+  font-size:13px !important;
+  font-weight:650 !important;
+}
+
+#lifeosChatMenuDrawer #speechLanguage {
+  min-width:0 !important;
+  width:100% !important;
+}
+
+/* ===== Footer ===== */
+
+#chatApp .lifeos-minimal-footer {
+  width:100% !important;
+  padding:7px 0 1px !important;
+  margin:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  color:rgba(246,240,223,.42) !important;
+  font-size:9px !important;
+  font-weight:400 !important;
+  line-height:1.2 !important;
+  letter-spacing:.01em !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  overflow-x:auto !important;
+  scrollbar-width:none;
+}
+
+#chatApp .lifeos-minimal-footer::-webkit-scrollbar {
+  display:none;
+}
+
+/* ===== Mobile header layout ===== */
+
+@media (max-width:640px) {
+
+  body #chatApp .topbar {
+    width:100% !important;
+    display:grid !important;
+    grid-template-columns:44px minmax(0,1fr) auto !important;
+    grid-template-rows:auto !important;
+    align-items:center !important;
+    gap:9px !important;
+  }
+
+  body #chatApp .topbar > .lifeos-menu-toggle {
+    grid-column:1 !important;
+    grid-row:1 !important;
+  }
+
+  body #chatApp .topbar > .brand {
+    grid-column:2 !important;
+    grid-row:1 !important;
+    min-width:0 !important;
+  }
+
+  body #chatApp .topbar > .chat-account {
+    grid-column:3 !important;
+    grid-row:1 !important;
+    width:auto !important;
+    max-width:120px !important;
+  }
+
+  body #chatApp .brand .logo {
+    width:42px !important;
+    height:42px !important;
+    flex-basis:42px !important;
+  }
+
+  body #chatApp .brand-title {
+    font-size:17px !important;
+  }
+
+  body #chatApp .brand-sub {
+    font-size:7px !important;
+    letter-spacing:.08em !important;
+  }
+
+  body #chatApp .lifeos-user-welcome #userIdentity {
+    max-width:92px !important;
+    font-size:15px !important;
+  }
+
+  body #chatApp .chat-account-links {
+    display:none !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  #lifeosChatMenuDrawer,
+  #lifeosChatMenuBackdrop {
+    transition:none !important;
+  }
+}
+</style>
+
+<script id="lifeos-premium-chat-menu-script-v1">
+(function () {
+  "use strict";
+
+  function initialisePremiumChatMenu() {
+    var chatApp = document.getElementById("chatApp");
+    if (!chatApp) return;
+
+    var topbar = chatApp.querySelector(".topbar");
+    var tools = chatApp.querySelector(".tools");
+
+    if (!topbar || !tools) return;
+    if (document.getElementById("lifeosChatMenuDrawer")) return;
+
+    var toggle = document.createElement("button");
+    toggle.id = "lifeosChatMenuToggle";
+    toggle.className = "lifeos-menu-toggle";
+    toggle.type = "button";
+    toggle.setAttribute("aria-label", "Open chat menu");
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.textContent = "☰";
+
+    var backdrop = document.createElement("div");
+    backdrop.id = "lifeosChatMenuBackdrop";
+    backdrop.setAttribute("aria-hidden", "true");
+
+    var drawer = document.createElement("aside");
+    drawer.id = "lifeosChatMenuDrawer";
+    drawer.setAttribute("aria-label", "Chat menu");
+
+    var heading = document.createElement("div");
+    heading.className = "lifeos-menu-heading";
+
+    var headingText = document.createElement("div");
+    headingText.className = "lifeos-menu-heading-text";
+    headingText.innerHTML =
+      '<span class="lifeos-menu-heading-title">LifeOSAI</span>' +
+      '<span class="lifeos-menu-heading-subtitle">Chat controls</span>';
+
+    var closeButton = document.createElement("button");
+    closeButton.id = "lifeosChatMenuClose";
+    closeButton.type = "button";
+    closeButton.setAttribute("aria-label", "Close chat menu");
+    closeButton.textContent = "×";
+
+    heading.appendChild(headingText);
+    heading.appendChild(closeButton);
+
+    drawer.appendChild(heading);
+
+    /*
+     * Move the EXISTING controls rather than cloning them.
+     * Existing IDs and event listeners remain intact.
+     */
+    drawer.appendChild(tools);
+
+    topbar.insertBefore(toggle, topbar.firstChild);
+    document.body.appendChild(backdrop);
+    document.body.appendChild(drawer);
+
+    function setOpen(open) {
+      drawer.classList.toggle("open", open);
+      backdrop.classList.toggle("open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+      document.documentElement.classList.toggle(
+        "lifeos-chat-menu-open",
+        open
+      );
+    }
+
+    toggle.addEventListener("click", function () {
+      setOpen(!drawer.classList.contains("open"));
+    });
+
+    closeButton.addEventListener("click", function () {
+      setOpen(false);
+    });
+
+    backdrop.addEventListener("click", function () {
+      setOpen(false);
+    });
+
+    drawer.addEventListener("click", function (event) {
+      var target = event.target;
+      if (
+        target &&
+        (
+          target.closest("#newBtn") ||
+          target.closest("#historyBtn") ||
+          target.closest("#clearBtn") ||
+          target.closest("#lifeosVoiceConversationNav")
+        )
+      ) {
+        window.setTimeout(function () {
+          setOpen(false);
+        }, 80);
+      }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") setOpen(false);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initialisePremiumChatMenu,
+      { once:true }
+    );
+  } else {
+    initialisePremiumChatMenu();
+  }
+}());
+</script>
+
 </body>
 </html>
