@@ -2,6 +2,86 @@
 <html lang="en" class="lifeos-auth-pending">
 <head>
 
+<style id="lifeos-premium-auth-bridge-v1">
+/*
+ * LifeOSAI premium navigation bridge.
+ * Authentication remains unchanged.
+ * This layer only prevents protected sign-in UI from flashing
+ * while the saved session is being restored.
+ */
+
+html.lifeos-auth-pending {
+  background:#030304 !important;
+}
+
+html.lifeos-auth-pending body {
+  visibility:hidden !important;
+  opacity:0 !important;
+}
+
+html.lifeos-auth-pending::before {
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:2147483646;
+  display:block;
+  background:
+    radial-gradient(
+      circle at 50% 43%,
+      rgba(235,187,69,.13) 0,
+      rgba(235,187,69,.045) 21%,
+      rgba(3,3,4,0) 48%
+    ),
+    linear-gradient(
+      180deg,
+      #050506 0%,
+      #020203 100%
+    );
+}
+
+html.lifeos-auth-pending::after {
+  content:"";
+  position:fixed;
+  z-index:2147483647;
+  left:50%;
+  top:50%;
+  width:96px;
+  height:96px;
+  transform:translate(-50%,-58%);
+  display:block;
+  background:
+    url("/assets/lifeos-logo-2026.png")
+    center center / contain no-repeat;
+  filter:
+    drop-shadow(0 0 12px rgba(234,190,83,.32))
+    drop-shadow(0 12px 28px rgba(0,0,0,.62));
+  animation:lifeosPremiumBridgePulse 1.45s ease-in-out infinite;
+}
+
+html.lifeos-auth-ready body {
+  visibility:visible !important;
+  opacity:1 !important;
+}
+
+@keyframes lifeosPremiumBridgePulse {
+  0%,100% {
+    transform:translate(-50%,-58%) scale(.96);
+    opacity:.78;
+  }
+  50% {
+    transform:translate(-50%,-58%) scale(1);
+    opacity:1;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  html.lifeos-auth-pending::after {
+    animation:none !important;
+  }
+}
+</style>
+
+
 <style id="lifeos-auth-prepaint-v1">
 html.lifeos-auth-pending body {
   visibility: hidden !important;
