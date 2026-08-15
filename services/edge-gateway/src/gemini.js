@@ -2,7 +2,7 @@ import { GatewayError, stableHash } from "./policy.js";
 
 export const GEMINI_WEBSOCKET_URL =
   "wss://generativelanguage.googleapis.com/ws/" +
-  "google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained";
+  "google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained";
 export const TOKEN_IDEMPOTENCY_TTL_SECONDS = 60;
 
 function fetchImpl(env) {
