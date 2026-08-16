@@ -38,9 +38,9 @@ const searchAttribution=document.getElementById("searchAttribution");
 const orb=document.getElementById("orb");
 const audioElement=document.getElementById("sophiaAudio");
 
-/* LOSAI_PREMIUM_VOICE_CONVERSATION_V1 */
-function signalPremiumVoicePhase(phase){
-  window.dispatchEvent(new CustomEvent("lifeos-premium-voice-phase",{
+/* LOSAI_EXACT_VOICE_PHASE_BRIDGE_V1 */
+function signalLifeOSVoicePhase(phase){
+  window.dispatchEvent(new CustomEvent("lifeos-voice-phase",{
     detail:{phase:String(phase||"idle")}
   }));
 }
@@ -218,33 +218,32 @@ function appendSearchAttribution(metadata){
 }
 
 function refreshControls(){
-  const micLabel=micMuted?"Unmute":"Mute";
-  const speakerLabel=speakerEnabled?"Speaker":"Muted";
-
   micButton.innerHTML=
     '<span class="lifeos-control-icon-v1" aria-hidden="true">'+
-      '<svg viewBox="0 0 24 24">'+
-        '<rect x="9" y="3" width="6" height="11" rx="3"></rect>'+
-        '<path d="M5.5 11a6.5 6.5 0 0 0 13 0"></path>'+
-        '<path d="M12 17.5V21"></path>'+
-        '<path d="M9 21h6"></path>'+
-      '</svg>'+
-    '</span>'+
-    '<span class="lifeos-control-label-v1">'+micLabel+'</span>';
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">'+
+    '<rect x="9" y="3" width="6" height="11" rx="3"></rect>'+
+    '<path d="M5.5 11a6.5 6.5 0 0 0 13 0"></path>'+
+    '<path d="M12 17.5V21"></path><path d="M9 21h6"></path>'+
+    '</svg></span>';
 
   speakerButton.innerHTML=
     '<span class="lifeos-control-icon-v1" aria-hidden="true">'+
-      '<svg viewBox="0 0 24 24">'+
-        '<path d="M5 9v6h4l5 4V5L9 9H5Z"></path>'+
-        (speakerEnabled
-          ?'<path d="M17 9c1.4 1.7 1.4 4.3 0 6"></path><path d="M19.5 6.5c3 3 3 8 0 11"></path>'
-          :'<path d="m17 10 4 4m0-4-4 4"></path>')+
-      '</svg>'+
-    '</span>'+
-    '<span class="lifeos-control-label-v1">'+speakerLabel+'</span>';
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">'+
+    '<path d="M5 9v6h4l5 4V5L9 9H5Z"></path>'+
+    (speakerEnabled
+      ?'<path d="M17 9c1.4 1.7 1.4 4.3 0 6"></path><path d="M19.5 6.5c3 3 3 8 0 11"></path>'
+      :'<path d="m17 10 4 4m0-4-4 4"></path>')+
+    '</svg></span>';
 
-  micButton.setAttribute("aria-label",micMuted?"Unmute microphone":"Mute microphone");
-  speakerButton.setAttribute("aria-label",speakerEnabled?"Mute Sophia audio":"Enable Sophia audio");
+  micButton.setAttribute(
+    "aria-label",
+    micMuted?"Unmute microphone":"Mute microphone"
+  );
+
+  speakerButton.setAttribute(
+    "aria-label",
+    speakerEnabled?"Mute Sophia audio":"Enable Sophia audio"
+  );
 
   micButton.classList.toggle("active",!micMuted);
   micButton.classList.toggle("warn",micMuted);
@@ -624,28 +623,9 @@ async function handleMessage(event,sourceSocket,resuming){
     reconnecting=false;
     reconnectAttempts=0;
     if(currentModelPreference==="primary")clearPrimarySuppression();
+    signalLifeOSVoicePhase("connected");
     audit("voice_connected",{metadata:{route:location.pathname,transport:"gemini-live",status:resuming?"resumed":"connected",model:currentModel,model_preference:currentModelPreference}});
-    signalPremiumVoicePhase("connected");
     try{await playConnectionCue();}catch(error){console.warn("LifeOS connection cue unavailable.",error);}
-
-    if(!resuming&&socket&&socket.readyState===WebSocket.OPEN){
-      try{
-        socket.send(JSON.stringify({
-          clientContent:{
-            turns:[{
-              role:"user",
-              parts:[{
-                text:"Give only this brief spoken connection announcement, naturally and warmly: Live conversation is now connected. You can speak gently."
-              }]
-            }],
-            turnComplete:true
-          }
-        }));
-      }catch(error){
-        console.warn("LifeOS Sophia connection announcement unavailable.",error);
-      }
-    }
-
     setStatus(
       resuming
         ?"Connected — conversation resumed with enhanced voice and live search."
@@ -766,7 +746,7 @@ async function startConversation(){
   fallbackAttempted=currentModelPreference==="fallback";
   openLiveConnection=null;
   setStatus("Sophia is connecting to LifeOS Synthetic Intelligence…","");
-  signalPremiumVoicePhase("connecting");
+  signalLifeOSVoicePhase("connecting");
   try{
     await ensureOutputContext();
     await playConnectingCue();
@@ -842,7 +822,7 @@ function stopAndClean(message,state,socketAlreadyClosed){
   fallbackAttempted=false;
   openLiveConnection=null;
   micMuted=false;
-  signalPremiumVoicePhase(state==="error"?"error":"idle");
+  signalLifeOSVoicePhase(state==="error"?"error":"idle");
   clearOutput();
   if(wasConnected){void playDisconnectionCue().catch(error=>console.warn("LifeOS disconnection cue unavailable.",error));}
   if(processor){processor.onaudioprocess=null;try{processor.disconnect();}catch(error){}}
