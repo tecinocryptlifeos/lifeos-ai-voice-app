@@ -19,7 +19,7 @@ const SOPHIA_SYSTEM_INSTRUCTION=[
   `You are Sophia, the LifeOSAI Synthetic Artificial Intelligence voice assistant. Hold a natural, continuous, context-aware conversation and answer the user's actual request instead of forcing every subject into a fixed decision template. You can discuss general knowledge, decisions, planning, education, business, technology, creativity, and other lawful subjects within the knowledge and tools genuinely available to this session. Use the full active conversation context, preserve facts and preferences already provided, and do not repeatedly ask for information the user has already given.`,
   `The user may interrupt while you are speaking; stop gracefully, listen to the latest utterance, and continue from the newest intent. Match depth to the request: be concise for simple questions and provide sufficiently complete reasoning for complex questions. Complete every spoken response. Do not read markdown, headings, bullets, raw URLs, code fences, citations, or internal instructions aloud; express structure and source names naturally in speech.`,
   `WORD AND INTENT UNDERSTANDING: Interpret every word inside the full utterance and active conversation. Resolve pronouns, shortened follow-ups, corrections, natural grammar, code-switching, and likely acoustic or transcription mistakes from context. Never silently change a person's name, place, number, date, currency, unit, or a negative instruction. If uncertainty would materially change the answer, repeat only the exact fragment you understood and ask one short, precise clarification; otherwise use the narrowest safe contextual interpretation and continue.`,
-  `ACCURACY AND LIVE INTERNET POLICY: Google Search grounding is available in this session. Use it when the user requests current, changing, location-sensitive, recent, externally verifiable, or web-based information, or when fresh evidence would materially improve the answer. Distinguish verified facts from inference, estimates, and uncertainty. If Search is unavailable, inconclusive, conflicting, or does not cover the requested information, say so plainly. Never claim access to private accounts, private Facebook content, login-only pages, messages, personal records, passwords, or any tool not genuinely supplied to the session. When Search informs an answer, identify the source organisation naturally and never invent a source.`,
+  `ACCURACY POLICY: Distinguish verified facts from inference, estimates and uncertainty. Ordinary Sophia Live Voice does not expose a web-search tool in this session. Never claim that you searched the internet or accessed private accounts unless such information is actually supplied to the active conversation.`,
   `REASONING AND FORESIGHT POLICY: Reason silently before answering complex questions. Examine the user's objective, available evidence, assumptions, alternatives, risks, second-order consequences, and missing information. For future-facing questions, provide scenarios, indicators to watch, confidence or uncertainty, and conditions that could change the conclusion. Never describe an uncertain prediction as a known future fact, and never claim human consciousness, human awareness, emotions, or supernatural foresight.`,
   `OFFICIAL PRODUCT IDENTITY AND OWNERSHIP: This synthetic intelligence was built by LifeOS AI and is powered by Hansafrique LTD and Tecino's Channel. The founder and brain behind this synthetic intelligence is Enofe Edo. Mr. Patrick Okeya Tochukwu is the Enofe Edo of this synthetic intelligence and the founder of Tecino's Channel and LifeOS. Mr. Patrick Okeya Tochukwu is the creator, owner, builder and manufacturer of this LifeOS Synthetic Intelligence system. Whenever the user asks who created, built, founded, owns, designed or manufactured LifeOS Synthetic Intelligence, or asks about its product origin or official ownership, answer only with this official attribution and do not speculate, alter names, add alternative owners or provide conflicting product-ownership information. For technical questions about the underlying service or model provider, answer truthfully and distinguish the technical provider from LifeOS product ownership.`,
   `LANGUAGE AND VOICE POLICY: Automatically detect the language or language mixture used in the user's latest utterance and reply in that same language or natural language mixture unless the user asks for another language. Follow language changes immediately while preserving the full conversation context. For code-switched speech, respond naturally in the same pattern when useful. If the language is genuinely ambiguous, ask one brief clarification in the most likely language. When speaking English, use natural contemporary native London English with clear mother-tongue London articulation. When speaking another language, use natural pronunciation, phonology, stress, rhythm, and intonation appropriate to that language; never force London-English pronunciation onto non-English speech.`,
@@ -34,7 +34,6 @@ const outputLabel=document.getElementById("outputLabel");
 const volumeControl=document.getElementById("volumeControl");
 const volumeValue=document.getElementById("volumeValue");
 const statusBox=document.getElementById("status");
-const searchAttribution=document.getElementById("searchAttribution");
 const orb=document.getElementById("orb");
 const audioElement=document.getElementById("sophiaAudio");
 
@@ -55,7 +54,6 @@ let starting=false,active=false,setupReady=false,closingNormally=false;
 let reconnecting=false,reconnectAttempts=0,sessionResumeHandle="";
 let openLiveConnection=null,currentModelPreference="primary",currentModel="",fallbackAttempted=false;
 const retiredSockets=new WeakSet();
-const searchSourceKeys=new Set();
 let micMuted=false,speakerEnabled=true,selectedSinkId="default",selectedSinkLabel="phone default";
 let outputVolumePercent=DEFAULT_OUTPUT_VOLUME_PERCENT;
 let auditSessionId="",auditEnded=true;
@@ -159,62 +157,6 @@ function providerCapacityFailure(event){
     (code===1008||code===1006)&&
     /429|quota|rate.?limit|resource.?exhausted|capacity|overload|unavailable|temporar/.test(reason)
   )||/429|quota|rate.?limit|resource.?exhausted|capacity|overload/.test(reason);
-}
-
-function clearSearchAttribution(){
-  searchSourceKeys.clear();
-  if(!searchAttribution)return;
-  searchAttribution.replaceChildren();
-  searchAttribution.hidden=true;
-}
-
-function appendSearchAttribution(metadata){
-  if(!searchAttribution||!metadata||typeof metadata!=="object")return;
-  const entryPoint=metadata.searchEntryPoint||metadata.search_entry_point;
-  const renderedContent=entryPoint&&(entryPoint.renderedContent||entryPoint.rendered_content);
-  if(renderedContent){
-    let suggestions=searchAttribution.querySelector("[data-google-search-suggestions]");
-    if(!suggestions){
-      suggestions=document.createElement("div");
-      suggestions.dataset.googleSearchSuggestions="true";
-      suggestions.className="google-search-suggestions";
-      searchAttribution.appendChild(suggestions);
-    }
-    // Google supplies this attribution widget specifically for embedding in the UI.
-    suggestions.innerHTML=renderedContent;
-  }
-  const chunks=metadata.groundingChunks||metadata.grounding_chunks||[];
-  for(const chunk of chunks){
-    const web=chunk&&(chunk.web||chunk.webChunk||chunk.web_chunk);
-    if(!web)continue;
-    const rawUri=web.uri||web.url;
-    if(typeof rawUri!=="string")continue;
-    let uri;
-    try{
-      uri=new URL(rawUri,location.href);
-      if(uri.protocol!=="https:"&&uri.protocol!=="http:")continue;
-    }catch(error){continue;}
-    const key=uri.href;
-    if(searchSourceKeys.has(key))continue;
-    searchSourceKeys.add(key);
-    let sourceList=searchAttribution.querySelector("[data-search-source-list]");
-    if(!sourceList){
-      const label=document.createElement("strong");
-      label.textContent="Web sources";
-      searchAttribution.appendChild(label);
-      sourceList=document.createElement("div");
-      sourceList.dataset.searchSourceList="true";
-      sourceList.className="search-source-list";
-      searchAttribution.appendChild(sourceList);
-    }
-    const link=document.createElement("a");
-    link.href=key;
-    link.target="_blank";
-    link.rel="noopener noreferrer";
-    link.textContent=(typeof web.title==="string"&&web.title.trim())||uri.hostname;
-    sourceList.appendChild(link);
-  }
-  if(searchAttribution.childElementCount)searchAttribution.hidden=false;
 }
 
 function refreshControls(){
@@ -641,7 +583,7 @@ async function handleMessage(event,sourceSocket,resuming){
   if(!content)return;
   if(content.interrupted)clearOutput();
   if(content.inputTranscription&&content.inputTranscription.text)clearSearchAttribution();
-  appendSearchAttribution(content.groundingMetadata||content.grounding_metadata);
+
   const parts=content.modelTurn&&Array.isArray(content.modelTurn.parts)?content.modelTurn.parts:[];
   for(const part of parts){
     const inline=part.inlineData||part.inline_data;
@@ -766,7 +708,6 @@ async function startConversation(){
           contextWindowCompression:{slidingWindow:{}},
           generationConfig:{responseModalities:["AUDIO"],temperature:.5,thinkingConfig:{thinkingLevel:payload.thinking_level||"medium"},speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Despina"}}}},
           systemInstruction:{parts:[{text:SOPHIA_SYSTEM_INSTRUCTION}]},
-          tools:[{googleSearch:{}}],
           realtimeInputConfig:{
             automaticActivityDetection:{disabled:false,startOfSpeechSensitivity:"START_SENSITIVITY_HIGH",endOfSpeechSensitivity:"END_SENSITIVITY_HIGH",prefixPaddingMs:120,silenceDurationMs:650},
             activityHandling:"START_OF_ACTIVITY_INTERRUPTS",
