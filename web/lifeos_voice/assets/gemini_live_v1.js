@@ -570,10 +570,10 @@ async function handleMessage(event,sourceSocket,resuming){
     try{await playConnectionCue();}catch(error){console.warn("LifeOS connection cue unavailable.",error);}
     setStatus(
       resuming
-        ?"Connected — conversation resumed with enhanced voice and live search."
+        ?"Connected — conversation resumed."
         :(currentModelPreference==="fallback"
-          ?"Connected — resilient voice mode, Igbo priority and live search ready."
-          :"Connected — Gemini 3.1 enhanced voice, Igbo priority and live search ready."),
+          ?"Connected — resilient voice mode active."
+          :"Connected — Sophia live voice active."),
       "active"
     );
     refreshControls();
@@ -582,7 +582,6 @@ async function handleMessage(event,sourceSocket,resuming){
   const content=message.serverContent;
   if(!content)return;
   if(content.interrupted)clearOutput();
-  if(content.inputTranscription&&content.inputTranscription.text)clearSearchAttribution();
 
   const parts=content.modelTurn&&Array.isArray(content.modelTurn.parts)?content.modelTurn.parts:[];
   for(const part of parts){
