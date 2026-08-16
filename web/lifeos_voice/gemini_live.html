@@ -951,668 +951,6 @@ html.lifeos-voice-page-hidden .orb::after {
 </style>
 
 
-<style id="losai-premium-voice-conversation-v3">
-
-/* ===== PAGE BACKGROUND: one complete king artwork ===== */
-
-body,
-body.embedded {
-  background:
-    linear-gradient(
-      180deg,
-      rgba(0,0,0,.38),
-      rgba(0,0,0,.40) 52%,
-      rgba(0,0,0,.46)
-    ),
-    url("/assets/lifeos-home-king-bg.webp")
-    center center / cover no-repeat fixed !important;
-}
-
-body::before {
-  background:rgba(0,0,0,.08) !important;
-}
-
-main {
-  position:relative !important;
-  overflow:hidden !important;
-  background:rgba(3,3,3,.40) !important;
-  border-color:rgba(244,199,93,.38) !important;
-  backdrop-filter:blur(2px) saturate(92%) !important;
-}
-
-/* ===== HEADER ===== */
-
-.lifeos-voice-userbar-v1 {
-  width:100% !important;
-  min-height:86px !important;
-  display:grid !important;
-  grid-template-columns:66px minmax(0,1fr) 82px !important;
-  align-items:center !important;
-  gap:8px !important;
-  padding:9px 11px !important;
-  box-sizing:border-box !important;
-}
-
-.lifeos-voice-header-logo-v3,
-.lifeos-voice-header-logo-v3 .brand-emblem,
-.lifeos-voice-header-logo-v3 .lifeos-home-logo-link-v1 {
-  position:static !important;
-  width:54px !important;
-  height:54px !important;
-  min-width:54px !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  margin:0 !important;
-  padding:0 !important;
-  transform:none !important;
-}
-
-.lifeos-voice-header-logo-v3 img {
-  display:block !important;
-  width:50px !important;
-  height:50px !important;
-  object-fit:contain !important;
-}
-
-.lifeos-voice-user-welcome-v1 {
-  display:flex !important;
-  flex-direction:column !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:4px !important;
-  min-width:0 !important;
-  text-align:center !important;
-}
-
-.lifeos-voice-welcome-label-v1 {
-  display:block !important;
-  color:#f3c969 !important;
-  font-size:18px !important;
-  font-weight:850 !important;
-  line-height:1 !important;
-  letter-spacing:.07em !important;
-  text-transform:uppercase !important;
-}
-
-.lifeos-voice-user-welcome-v1 #userIdentity {
-  display:block !important;
-  max-width:160px !important;
-  overflow:hidden !important;
-  color:rgba(255,244,215,.82) !important;
-  font-size:13px !important;
-  font-weight:650 !important;
-  line-height:1.15 !important;
-  text-overflow:ellipsis !important;
-  white-space:nowrap !important;
-}
-
-.lifeos-voice-signout-v3 {
-  display:flex !important;
-  align-items:center !important;
-  justify-content:flex-end !important;
-}
-
-/* ===== TITLE + FOOTER ENTRY ===== */
-
-.lifeos-delayed-brand-v3,
-.lifeos-delayed-footer-v3 {
-  opacity:0 !important;
-  visibility:hidden !important;
-}
-
-body.lifeos-voice-settled-v3 .lifeos-delayed-brand-v3 {
-  visibility:visible !important;
-  animation:lifeosTitleRevealV3 1.4s ease forwards;
-}
-
-body.lifeos-voice-settled-v3 .lifeos-delayed-footer-v3 {
-  visibility:visible !important;
-  animation:lifeosFooterRevealV3 1.15s ease forwards;
-}
-
-@keyframes lifeosTitleRevealV3 {
-  0% {
-    opacity:0;
-    transform:translateY(8px);
-    filter:blur(4px);
-    letter-spacing:.07em;
-  }
-  100% {
-    opacity:1;
-    transform:translateY(0);
-    filter:blur(0);
-  }
-}
-
-@keyframes lifeosFooterRevealV3 {
-  0% {
-    opacity:0;
-    transform:translateY(7px);
-  }
-  100% {
-    opacity:.68;
-    transform:translateY(0);
-  }
-}
-
-/* ===== CLEAN ORB ===== */
-
-.lifeos-clean-orb-v3 {
-  position:relative !important;
-  isolation:isolate !important;
-  overflow:hidden !important;
-  background:
-    radial-gradient(
-      circle at center,
-      rgba(245,191,55,.15),
-      rgba(20,15,6,.70) 38%,
-      rgba(2,3,5,.96) 74%
-    ) !important;
-  border-color:rgba(239,188,61,.70) !important;
-  box-shadow:
-    inset 0 0 50px rgba(239,188,61,.17),
-    0 0 34px rgba(239,188,61,.17) !important;
-}
-
-.lifeos-orb-core-v3 {
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:24%;
-  aspect-ratio:1;
-  transform:translate(-50%,-50%);
-  border-radius:50%;
-  background:
-    radial-gradient(
-      circle,
-      rgba(255,235,158,.28),
-      rgba(232,167,35,.08) 48%,
-      transparent 72%
-    );
-}
-
-.lifeos-arrival-ring-v3 {
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:40%;
-  aspect-ratio:1;
-  transform:translate(-50%,-50%) scale(.40);
-  border:1px solid rgba(255,222,125,.76);
-  border-radius:50%;
-  opacity:0;
-  box-shadow:
-    0 0 18px rgba(245,191,55,.44),
-    inset 0 0 14px rgba(245,191,55,.25);
-}
-
-/* ===== SOPHIA NETWORK-SYNCHRONIZED RELEASE ===== */
-
-.lifeos-sophia-release-layer-v3 {
-  position:fixed !important;
-  left:0;
-  top:0;
-  width:1px;
-  height:1px;
-  z-index:2147482000 !important;
-  pointer-events:none !important;
-  opacity:0;
-  visibility:hidden;
-}
-
-.lifeos-sophia-energy-v3 {
-  position:absolute;
-  left:-20px;
-  top:-42px;
-  width:40px;
-  height:84px;
-  filter:
-    drop-shadow(0 0 5px rgba(255,255,255,.96))
-    drop-shadow(0 0 14px rgba(245,191,55,.92))
-    drop-shadow(0 0 28px rgba(218,132,7,.62));
-}
-
-.lifeos-sophia-energy-v3 svg {
-  display:block;
-  width:100%;
-  height:100%;
-}
-
-.lifeos-release-lightning-v3 {
-  position:absolute;
-  left:-7px;
-  top:-2px;
-  width:14px;
-  height:4px;
-  border-radius:999px;
-  background:#fff0a8;
-  box-shadow:
-    0 0 6px #fff8d7,
-    0 0 16px #eabe53,
-    0 0 30px rgba(218,132,7,.76);
-}
-
-#voiceApp.lifeos-voice-connected-v3 .lifeos-arrival-ring-v3 {
-  animation:lifeosArrivalV3 1.35s ease-out infinite;
-}
-
-@keyframes lifeosArrivalV3 {
-  from {
-    opacity:.72;
-    transform:translate(-50%,-50%) scale(.38);
-  }
-  to {
-    opacity:0;
-    transform:translate(-50%,-50%) scale(1.58);
-  }
-}
-
-/* =========================================================
-   ICON-ONLY CONTROLS
-   NO BOX / NO CARD / NO WRITTEN LABEL
-   ========================================================= */
-
-.lifeos-premium-controls-v1 {
-  width:100% !important;
-  display:flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  gap:38px !important;
-  background:transparent !important;
-  border:0 !important;
-  box-shadow:none !important;
-}
-
-#micButton,
-#speakerButton,
-#outputButton,
-.lifeos-icon-control-v1 {
-  width:46px !important;
-  height:46px !important;
-  min-width:46px !important;
-  min-height:46px !important;
-  flex:0 0 46px !important;
-  display:grid !important;
-  place-items:center !important;
-  padding:8px !important;
-  margin:0 !important;
-  border:0 !important;
-  border-radius:50% !important;
-  outline:0 !important;
-  background:transparent !important;
-  box-shadow:none !important;
-  color:#eabe53 !important;
-  appearance:none !important;
-  -webkit-appearance:none !important;
-}
-
-#micButton:hover,
-#speakerButton:hover,
-#outputButton:hover,
-#micButton:focus-visible,
-#speakerButton:focus-visible,
-#outputButton:focus-visible {
-  background:transparent !important;
-  box-shadow:none !important;
-  color:#ffd66d !important;
-}
-
-#micButton:active,
-#speakerButton:active,
-#outputButton:active {
-  transform:scale(.92);
-}
-
-.lifeos-control-icon-v1 {
-  display:grid !important;
-  place-items:center !important;
-  width:30px !important;
-  height:30px !important;
-  margin:0 !important;
-}
-
-.lifeos-control-icon-v1 svg,
-.lifeos-volume-icon-v1 svg {
-  display:block !important;
-  width:100% !important;
-  height:100% !important;
-  fill:none !important;
-  stroke:currentColor !important;
-  stroke-width:1.8 !important;
-  stroke-linecap:round !important;
-  stroke-linejoin:round !important;
-}
-
-.lifeos-control-label-v1 {
-  display:none !important;
-}
-
-/* ===== VOLUME: icon + slider only ===== */
-
-.lifeos-volume-icon-only-v3,
-.lifeos-premium-volume-control-v1,
-.lifeos-volume-control {
-  width:min(100%,520px) !important;
-  margin:2px auto 0 !important;
-  padding:4px 2px !important;
-  display:grid !important;
-  grid-template-columns:34px minmax(120px,1fr) !important;
-  align-items:center !important;
-  gap:10px !important;
-  border:0 !important;
-  border-radius:0 !important;
-  background:transparent !important;
-  box-shadow:none !important;
-}
-
-.lifeos-volume-icon-v1 {
-  display:grid !important;
-  place-items:center !important;
-  width:26px !important;
-  height:26px !important;
-  color:#eabe53 !important;
-}
-
-#volumeControl {
-  width:100% !important;
-  margin:0 !important;
-  accent-color:#eabe53 !important;
-}
-
-.lifeos-volume-heading-v1 {
-  display:contents !important;
-}
-
-.lifeos-volume-heading-v1 > span:not(.lifeos-volume-icon-v1),
-.lifeos-volume-value-hidden-v3,
-#volumeValue {
-  display:none !important;
-}
-
-.lifeos-volume-control:focus-within {
-  border:0 !important;
-  box-shadow:none !important;
-}
-
-/* ===== FOOTER ===== */
-
-.lifeos-bottom-brand-v1 {
-  order:9 !important;
-  margin:10px auto 0 !important;
-  color:rgba(242,191,65,.46) !important;
-  font-size:9px !important;
-  font-weight:700 !important;
-  letter-spacing:.22em !important;
-  text-align:center !important;
-}
-
-.lifeos-voice-footer {
-  order:10 !important;
-}
-
-/* ===== MOBILE ===== */
-
-@media (max-width:700px), (hover:none) and (pointer:coarse) {
-  body,
-  body.embedded {
-    background:
-      linear-gradient(
-        180deg,
-        rgba(0,0,0,.38),
-        rgba(0,0,0,.41) 52%,
-        rgba(0,0,0,.47)
-      ),
-      url("/assets/lifeos-home-king-bg.webp")
-      center center / cover no-repeat scroll !important;
-  }
-
-  main {
-    background:rgba(3,3,3,.42) !important;
-    backdrop-filter:none !important;
-  }
-}
-
-@media (max-width:520px) {
-  .lifeos-voice-userbar-v1 {
-    grid-template-columns:54px minmax(0,1fr) 72px !important;
-    min-height:78px !important;
-    padding:8px !important;
-  }
-
-  .lifeos-voice-header-logo-v3,
-  .lifeos-voice-header-logo-v3 .brand-emblem,
-  .lifeos-voice-header-logo-v3 .lifeos-home-logo-link-v1 {
-    width:46px !important;
-    height:46px !important;
-    min-width:46px !important;
-  }
-
-  .lifeos-voice-header-logo-v3 img {
-    width:44px !important;
-    height:44px !important;
-  }
-
-  .lifeos-voice-welcome-label-v1 {
-    font-size:16px !important;
-  }
-
-  .lifeos-voice-user-welcome-v1 #userIdentity {
-    max-width:112px !important;
-    font-size:12px !important;
-  }
-
-  .lifeos-premium-controls-v1 {
-    gap:30px !important;
-  }
-}
-
-</style>
-
-<script id="losai-premium-voice-conversation-script-v3">
-(function () {
-  "use strict";
-
-  var voiceApp;
-  var orb;
-  var releaseLayer;
-  var travelAnimation = null;
-  var connected = false;
-
-  function elements() {
-    voiceApp = document.getElementById("voiceApp");
-    orb = document.getElementById("orb");
-    releaseLayer = document.getElementById(
-      "lifeosSophiaReleaseLayerV3"
-    );
-  }
-
-  function resetRelease() {
-    connected = false;
-
-    if (travelAnimation) {
-      try { travelAnimation.cancel(); } catch (_) {}
-      travelAnimation = null;
-    }
-
-    if (releaseLayer) {
-      releaseLayer.style.opacity = "0";
-      releaseLayer.style.visibility = "hidden";
-      releaseLayer.style.transform = "";
-    }
-
-    if (voiceApp) {
-      voiceApp.classList.remove(
-        "lifeos-voice-connecting-v3",
-        "lifeos-voice-connected-v3"
-      );
-    }
-  }
-
-  function destination() {
-    var rect = orb.getBoundingClientRect();
-
-    return {
-      x:rect.left + rect.width / 2,
-      y:rect.top + rect.height / 2
-    };
-  }
-
-  /*
-   * IMPORTANT:
-   * This function does not decide when connection starts.
-   * gemini_live_v1.js dispatches "connecting" from the real
-   * startConversation() network path.
-   */
-  function startNetworkAnimation() {
-    if (!voiceApp || !orb || !releaseLayer) return;
-
-    resetRelease();
-
-    voiceApp.classList.add("lifeos-voice-connecting-v3");
-
-    var target = destination();
-
-    var sourceX = window.innerWidth * .50;
-    var sourceY = Math.min(
-      window.innerHeight * .74,
-      target.y + Math.max(190, window.innerHeight * .28)
-    );
-
-    releaseLayer.style.left = sourceX + "px";
-    releaseLayer.style.top = sourceY + "px";
-    releaseLayer.style.opacity = "1";
-    releaseLayer.style.visibility = "visible";
-
-    var dx = target.x - sourceX;
-    var dy = target.y - sourceY;
-
-    travelAnimation = releaseLayer.animate(
-      [
-        {
-          transform:"translate3d(0,0,0) scale(.28)",
-          opacity:0
-        },
-        {
-          offset:.12,
-          transform:
-            "translate3d(" +
-            (dx * .10) + "px," +
-            (dy * .10) + "px,0) scale(.42)",
-          opacity:1
-        },
-        {
-          offset:.68,
-          transform:
-            "translate3d(" +
-            (dx * .70) + "px," +
-            (dy * .70) + "px,0) scale(.82)",
-          opacity:1
-        },
-        {
-          transform:
-            "translate3d(" +
-            dx + "px," +
-            dy + "px,0) scale(1)",
-          opacity:.96
-        }
-      ],
-      {
-        duration:1050,
-        easing:"cubic-bezier(.16,.84,.32,1)",
-        fill:"forwards"
-      }
-    );
-
-    /*
-     * No automatic repeat.
-     * If network connection takes longer, Sophia waits at orb.
-     */
-  }
-
-  /*
-   * This is invoked only when gemini_live_v1.js reports
-   * the real successful live connection.
-   */
-  function confirmNetworkConnected() {
-    if (!voiceApp || !orb || !releaseLayer) return;
-
-    connected = true;
-
-    voiceApp.classList.remove("lifeos-voice-connecting-v3");
-    voiceApp.classList.add("lifeos-voice-connected-v3");
-
-    var target = destination();
-
-    releaseLayer.style.left = target.x + "px";
-    releaseLayer.style.top = target.y + "px";
-    releaseLayer.style.transform =
-      "translate3d(0,0,0) scale(.80)";
-    releaseLayer.style.opacity = "1";
-    releaseLayer.style.visibility = "visible";
-  }
-
-  function applyNetworkPhase(phase) {
-    if (phase === "connecting") {
-      startNetworkAnimation();
-      return;
-    }
-
-    if (phase === "connected") {
-      confirmNetworkConnected();
-      return;
-    }
-
-    resetRelease();
-  }
-
-  function revealSettledInterface() {
-    /*
-     * Wait for browser layout/paint first.
-     * Then count the requested one second.
-     */
-    window.requestAnimationFrame(function () {
-      window.requestAnimationFrame(function () {
-        window.setTimeout(function () {
-          document.body.classList.add(
-            "lifeos-voice-settled-v3"
-          );
-        }, 1000);
-      });
-    });
-  }
-
-  function initialise() {
-    elements();
-
-    revealSettledInterface();
-
-    window.addEventListener(
-      "lifeos-premium-voice-phase",
-      function (event) {
-        applyNetworkPhase(
-          event.detail && event.detail.phase
-            ? event.detail.phase
-            : "idle"
-        );
-      }
-    );
-
-    applyNetworkPhase("idle");
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener(
-      "DOMContentLoaded",
-      initialise,
-      { once:true }
-    );
-  } else {
-    initialise();
-  }
-}());
-</script>
-
 </head>
 <body>
 <main>
@@ -1697,39 +1035,6 @@ body.lifeos-voice-settled-v3 .lifeos-delayed-footer-v3 {
     <div class="lifeos-arrival-ring-v3"></div>
   </div>
 
-  <div id="lifeosSophiaReleaseLayerV3"
-       class="lifeos-sophia-release-layer-v3"
-       aria-hidden="true">
-    <span class="lifeos-release-lightning-v3"></span>
-    <div class="lifeos-sophia-energy-v3">
-      <svg viewBox="0 0 90 190" role="presentation" focusable="false">
-        <defs>
-          <linearGradient id="lifeosSophiaGoldV3" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#fff8d2"/>
-            <stop offset=".42" stop-color="#f4c75d"/>
-            <stop offset="1" stop-color="#a86b12"/>
-          </linearGradient>
-        </defs>
-        <circle cx="45" cy="24" r="15" fill="url(#lifeosSophiaGoldV3)"/>
-        <path d="M31 43
-                 C35 38 55 38 59 43
-                 L67 91
-                 L58 126
-                 L55 181
-                 L43 181
-                 L40 132
-                 L35 181
-                 L23 181
-                 L27 126
-                 L18 91
-                 Z"
-              fill="url(#lifeosSophiaGoldV3)"/>
-        <path d="M29 50 L7 100 L17 105 L38 70 Z"
-              fill="url(#lifeosSophiaGoldV3)"/>
-        <path d="M61 50 L83 100 L73 105 L52 70 Z"
-              fill="url(#lifeosSophiaGoldV3)"/>
-      </svg>
-    </div>
   </div>
   <button id="liveButton" class="primary" type="button">Start Live Conversation</button>
   <div class="controls lifeos-premium-controls-v1" aria-label="Voice controls">
@@ -1819,5 +1124,815 @@ body.lifeos-voice-settled-v3 .lifeos-delayed-footer-v3 {
 })();
 </script>
 <!-- LIFEOS_PASSWORD_VISIBILITY_V1:SCRIPT_END -->
+
+<style id="losai-approved-voice-interface-v5">
+/* LOSAI_APPROVED_VOICE_INTERFACE_V5 */
+
+/*
+ * APPROVED DESIGN PRINCIPLES
+ *
+ * 1. Exact user-supplied image is the visual foundation.
+ * 2. No generated Sophia/person/SVG character.
+ * 3. Network animation is driven by the real runtime event.
+ * 4. Existing audio engine is untouched.
+ * 5. Functional controls remain real HTML controls.
+ */
+
+body,
+body.embedded {
+  background:#020202 !important;
+}
+
+/* ===== MAIN VOICE COMPOSITION ===== */
+
+main,
+#voiceApp {
+  position:relative !important;
+  isolation:isolate !important;
+  overflow:hidden !important;
+}
+
+main {
+  width:min(calc(100% - 18px),480px) !important;
+  margin:9px auto !important;
+  padding:0 !important;
+  border:1px solid rgba(232,174,45,.48) !important;
+  border-radius:24px !important;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,.08) 0%,
+      rgba(0,0,0,.16) 54%,
+      rgba(0,0,0,.36) 100%
+    ),
+    url("/assets/lifeos-voice-conversation-reference.png")
+    center top / cover no-repeat !important;
+  box-shadow:
+    0 22px 70px rgba(0,0,0,.62),
+    inset 0 1px 0 rgba(255,211,104,.10) !important;
+}
+
+/*
+ * Hide obsolete visual artwork.
+ * This does NOT hide functional runtime controls.
+ */
+.lifeos-ambient-motion-v2,
+.lifeos-clean-orb-v3,
+.lifeos-sophia-release-layer-v3 {
+  display:none !important;
+}
+
+/* ===== HEADER ===== */
+
+.lifeos-voice-userbar-v1 {
+  position:relative !important;
+  z-index:30 !important;
+  width:100% !important;
+  min-height:78px !important;
+  display:grid !important;
+  grid-template-columns:58px minmax(0,1fr) 76px !important;
+  align-items:center !important;
+  gap:8px !important;
+  padding:8px 10px !important;
+  box-sizing:border-box !important;
+  border:0 !important;
+  background:linear-gradient(
+    180deg,
+    rgba(0,0,0,.34),
+    rgba(0,0,0,.06)
+  ) !important;
+  box-shadow:none !important;
+}
+
+.lifeos-voice-header-logo-v3,
+.lifeos-voice-header-logo-v3 .brand-emblem,
+.lifeos-voice-header-logo-v3 .lifeos-home-logo-link-v1 {
+  position:static !important;
+  width:50px !important;
+  height:50px !important;
+  min-width:50px !important;
+  margin:0 !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  transform:none !important;
+}
+
+.lifeos-voice-header-logo-v3 img {
+  display:block !important;
+  width:48px !important;
+  height:48px !important;
+  object-fit:contain !important;
+}
+
+.lifeos-voice-user-welcome-v1 {
+  min-width:0 !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:3px !important;
+  text-align:center !important;
+}
+
+.lifeos-voice-welcome-label-v1 {
+  display:block !important;
+  color:#f1b52d !important;
+  font-size:20px !important;
+  font-weight:900 !important;
+  line-height:1.05 !important;
+  letter-spacing:.02em !important;
+  text-transform:none !important;
+}
+
+.lifeos-voice-user-welcome-v1 #userIdentity {
+  display:block !important;
+  max-width:145px !important;
+  overflow:hidden !important;
+  color:#fff7e5 !important;
+  font-size:14px !important;
+  font-weight:650 !important;
+  line-height:1.15 !important;
+  text-overflow:ellipsis !important;
+  white-space:nowrap !important;
+}
+
+.lifeos-voice-signout-v3 {
+  display:flex !important;
+  justify-content:flex-end !important;
+  align-items:center !important;
+}
+
+#signOut {
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  color:#e9ae2b !important;
+}
+
+/* ===== DELAYED TITLE ===== */
+
+.lifeos-delayed-brand-v3 {
+  position:relative !important;
+  z-index:25 !important;
+  opacity:0 !important;
+  visibility:hidden !important;
+}
+
+body.lifeos-approved-settled-v5
+.lifeos-delayed-brand-v3 {
+  visibility:visible !important;
+  animation:
+    lifeosApprovedTitleRevealV5
+    1.35s
+    cubic-bezier(.22,.61,.36,1)
+    forwards;
+}
+
+@keyframes lifeosApprovedTitleRevealV5 {
+  0% {
+    opacity:0;
+    transform:translateY(8px);
+    filter:blur(3px);
+  }
+
+  100% {
+    opacity:1;
+    transform:translateY(0);
+    filter:blur(0);
+  }
+}
+
+/* ===== FUNCTIONAL INTERACTION AREA ===== */
+
+/*
+ * Keep the supplied image visually dominant.
+ * Controls are positioned over the lower interaction region.
+ */
+
+#liveButton {
+  position:relative !important;
+  z-index:30 !important;
+  display:block !important;
+  width:min(76%,330px) !important;
+  min-height:54px !important;
+  margin:
+    clamp(500px,61svh,650px)
+    auto
+    12px !important;
+  border:0 !important;
+  border-radius:17px !important;
+  background:
+    linear-gradient(
+      180deg,
+      #f5c653,
+      #d6941d
+    ) !important;
+  color:#181005 !important;
+  font-size:15px !important;
+  font-weight:900 !important;
+  box-shadow:
+    0 9px 25px rgba(0,0,0,.38) !important;
+}
+
+/* ===== ICON-ONLY CONTROLS ===== */
+
+.lifeos-premium-controls-v1,
+.controls {
+  position:relative !important;
+  z-index:30 !important;
+  width:100% !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:44px !important;
+  margin:0 auto 10px !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+#micButton,
+#speakerButton,
+#outputButton,
+.lifeos-icon-control-v1,
+.control {
+  width:46px !important;
+  height:46px !important;
+  min-width:46px !important;
+  min-height:46px !important;
+  flex:0 0 46px !important;
+  display:grid !important;
+  place-items:center !important;
+  padding:7px !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:50% !important;
+  outline:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  color:#efb42d !important;
+  appearance:none !important;
+  -webkit-appearance:none !important;
+}
+
+#micButton:hover,
+#speakerButton:hover,
+#outputButton:hover,
+#micButton:focus-visible,
+#speakerButton:focus-visible,
+#outputButton:focus-visible {
+  background:transparent !important;
+  box-shadow:none !important;
+  color:#ffd76f !important;
+}
+
+#micButton:active,
+#speakerButton:active,
+#outputButton:active {
+  transform:scale(.92);
+}
+
+.lifeos-control-label-v1 {
+  display:none !important;
+}
+
+/* ===== VOLUME: ICON + SLIDER ONLY ===== */
+
+.lifeos-volume-icon-only-v3,
+.lifeos-premium-volume-control-v1,
+.lifeos-volume-control {
+  position:relative !important;
+  z-index:30 !important;
+  width:min(88%,390px) !important;
+  margin:2px auto !important;
+  padding:2px !important;
+  display:grid !important;
+  grid-template-columns:30px minmax(100px,1fr) !important;
+  align-items:center !important;
+  gap:10px !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+}
+
+.lifeos-volume-icon-v1 {
+  width:25px !important;
+  height:25px !important;
+  display:grid !important;
+  place-items:center !important;
+  color:#efb42d !important;
+}
+
+#volumeControl {
+  width:100% !important;
+  margin:0 !important;
+  accent-color:#e9ae2b !important;
+}
+
+.lifeos-volume-heading-v1 {
+  display:contents !important;
+}
+
+.lifeos-volume-heading-v1
+> span:not(.lifeos-volume-icon-v1),
+.lifeos-volume-value-hidden-v3,
+#volumeValue {
+  display:none !important;
+}
+
+/* ===== STATUS ===== */
+
+#status {
+  position:relative !important;
+  z-index:30 !important;
+  min-height:20px !important;
+  margin:10px 12px 0 !important;
+  font-size:11px !important;
+}
+
+#outputLabel {
+  position:relative !important;
+  z-index:30 !important;
+  font-size:10px !important;
+}
+
+/* ==================================================
+   REAL NETWORK-SYNCHRONISED VISUAL EFFECT
+   ================================================== */
+
+#voiceApp::before {
+  content:"";
+  position:absolute;
+  z-index:12;
+  left:0;
+  right:0;
+  top:15%;
+  height:55%;
+  pointer-events:none;
+  opacity:0;
+  transform:scale(.96);
+  background:
+    radial-gradient(
+      circle at 55% 50%,
+      rgba(255,220,113,.00) 0%,
+      rgba(235,164,25,.00) 32%,
+      transparent 66%
+    );
+}
+
+/*
+ * Bottom energy line.
+ * It exists only while the REAL runtime says "connecting".
+ */
+#voiceApp::after {
+  content:"";
+  position:absolute;
+  z-index:13;
+  left:11%;
+  bottom:26%;
+  width:78%;
+  height:2px;
+  pointer-events:none;
+  opacity:0;
+  transform:scaleX(.04);
+  transform-origin:center;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(237,172,39,.18),
+      rgba(255,244,184,.98),
+      rgba(237,172,39,.18),
+      transparent
+    );
+  box-shadow:
+    0 0 8px rgba(255,232,141,.72),
+    0 0 19px rgba(231,160,25,.46);
+}
+
+/* REAL CONNECTING EVENT */
+
+#voiceApp.lifeos-approved-connecting-v5::before {
+  opacity:1;
+  animation:
+    lifeosApprovedEnergyV5
+    1.15s
+    ease-in-out
+    infinite;
+}
+
+#voiceApp.lifeos-approved-connecting-v5::after {
+  opacity:1;
+  animation:
+    lifeosApprovedBottomEnergyV5
+    .90s
+    ease-in-out
+    infinite;
+}
+
+/* REAL CONNECTED EVENT */
+
+#voiceApp.lifeos-approved-connected-v5::before {
+  opacity:.60;
+  background:
+    radial-gradient(
+      circle at 55% 50%,
+      rgba(255,223,121,.23) 0%,
+      rgba(234,164,29,.10) 31%,
+      transparent 65%
+    );
+  animation:
+    lifeosApprovedConnectedBreathV5
+    2.8s
+    ease-in-out
+    infinite;
+}
+
+#voiceApp.lifeos-approved-connected-v5::after {
+  opacity:0;
+  animation:none;
+}
+
+#voiceApp.lifeos-approved-error-v5::before,
+#voiceApp.lifeos-approved-error-v5::after {
+  opacity:0 !important;
+  animation:none !important;
+}
+
+@keyframes lifeosApprovedEnergyV5 {
+  0%,100% {
+    opacity:.20;
+    transform:scale(.96);
+  }
+
+  50% {
+    opacity:.76;
+    transform:scale(1.025);
+    background:
+      radial-gradient(
+        circle at 55% 50%,
+        rgba(255,226,128,.27),
+        rgba(229,155,21,.10) 32%,
+        transparent 67%
+      );
+  }
+}
+
+@keyframes lifeosApprovedBottomEnergyV5 {
+  0% {
+    opacity:.10;
+    transform:scaleX(.04);
+  }
+
+  45% {
+    opacity:.92;
+  }
+
+  100% {
+    opacity:.16;
+    transform:scaleX(1);
+  }
+}
+
+@keyframes lifeosApprovedConnectedBreathV5 {
+  0%,100% {
+    opacity:.35;
+    transform:scale(.985);
+  }
+
+  50% {
+    opacity:.62;
+    transform:scale(1.015);
+  }
+}
+
+/* ==================================================
+   DELAYED BOTTOM IDENTITY / FOOTER
+   ================================================== */
+
+.lifeos-approved-bottom-v5 {
+  position:relative;
+  z-index:30;
+  width:100%;
+  margin:22px auto 16px;
+  padding:0 14px;
+  box-sizing:border-box;
+  text-align:center;
+  opacity:0;
+  visibility:hidden;
+  transform:translateY(12px);
+}
+
+body.lifeos-approved-settled-v5
+.lifeos-approved-bottom-v5 {
+  visibility:visible;
+  animation:
+    lifeosApprovedFooterRevealV5
+    1.25s
+    cubic-bezier(.22,.61,.36,1)
+    forwards;
+}
+
+.lifeos-approved-bottom-title-v5 {
+  color:#eaae27;
+  font-size:clamp(27px,8vw,40px);
+  font-weight:950;
+  line-height:.96;
+  letter-spacing:-.035em;
+}
+
+.lifeos-approved-bottom-sub-v5 {
+  margin-top:7px;
+  color:#fff8e8;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.04em;
+}
+
+.lifeos-approved-bottom-rule-v5 {
+  width:82%;
+  height:1px;
+  margin:10px auto;
+  transform:scaleX(0);
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(232,169,39,.78),
+      transparent
+    );
+}
+
+body.lifeos-approved-settled-v5
+.lifeos-approved-bottom-rule-v5 {
+  animation:
+    lifeosApprovedRuleV5
+    .90s
+    .30s
+    ease
+    forwards;
+}
+
+.lifeos-approved-bottom-credit-v5 {
+  color:rgba(255,247,226,.60);
+  font-size:9px;
+  line-height:1.45;
+}
+
+.lifeos-approved-bottom-losai-v5 {
+  margin-top:5px;
+  color:#d89d24;
+  font-size:10px;
+  letter-spacing:.42em;
+}
+
+@keyframes lifeosApprovedFooterRevealV5 {
+  from {
+    opacity:0;
+    transform:translateY(12px);
+  }
+
+  to {
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes lifeosApprovedRuleV5 {
+  to {
+    transform:scaleX(1);
+  }
+}
+
+/*
+ * Hide the obsolete footer so there is only one delayed
+ * bottom identity presentation.
+ */
+.lifeos-delayed-footer-v3,
+.lifeos-voice-footer,
+.lifeos-bottom-brand-v1 {
+  display:none !important;
+}
+
+/* ===== MOBILE ===== */
+
+@media (max-width:520px) {
+
+  main {
+    width:calc(100% - 10px) !important;
+    margin:5px auto !important;
+    border-radius:20px !important;
+  }
+
+  .lifeos-voice-userbar-v1 {
+    grid-template-columns:50px minmax(0,1fr) 66px !important;
+    min-height:72px !important;
+    padding:7px 8px !important;
+  }
+
+  .lifeos-voice-header-logo-v3,
+  .lifeos-voice-header-logo-v3 .brand-emblem,
+  .lifeos-voice-header-logo-v3 .lifeos-home-logo-link-v1 {
+    width:44px !important;
+    height:44px !important;
+    min-width:44px !important;
+  }
+
+  .lifeos-voice-header-logo-v3 img {
+    width:42px !important;
+    height:42px !important;
+  }
+
+  .lifeos-voice-welcome-label-v1 {
+    font-size:18px !important;
+  }
+
+  .lifeos-voice-user-welcome-v1 #userIdentity {
+    max-width:105px !important;
+    font-size:13px !important;
+  }
+
+  #liveButton {
+    width:78% !important;
+    margin-top:clamp(470px,59svh,610px) !important;
+  }
+
+  .lifeos-premium-controls-v1,
+  .controls {
+    gap:36px !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+
+  #voiceApp::before,
+  #voiceApp::after,
+  .lifeos-delayed-brand-v3,
+  .lifeos-approved-bottom-v5,
+  .lifeos-approved-bottom-rule-v5 {
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+  }
+}
+</style>
+
+<script id="losai-approved-voice-interface-v5-script">
+(function(){
+  "use strict";
+
+  var app = null;
+  var bottom = null;
+  var settleTimer = null;
+
+  function setPhase(phase) {
+    if (!app) return;
+
+    app.classList.remove(
+      "lifeos-approved-connecting-v5",
+      "lifeos-approved-connected-v5",
+      "lifeos-approved-error-v5"
+    );
+
+    if (phase === "connecting") {
+      app.classList.add(
+        "lifeos-approved-connecting-v5"
+      );
+      return;
+    }
+
+    if (phase === "connected") {
+      app.classList.add(
+        "lifeos-approved-connected-v5"
+      );
+      return;
+    }
+
+    if (phase === "error") {
+      app.classList.add(
+        "lifeos-approved-error-v5"
+      );
+    }
+  }
+
+  function buildBottomIdentity() {
+    if (!app) return;
+
+    if (
+      document.querySelector(
+        ".lifeos-approved-bottom-v5"
+      )
+    ) {
+      return;
+    }
+
+    bottom = document.createElement("section");
+    bottom.className =
+      "lifeos-approved-bottom-v5";
+
+    bottom.setAttribute(
+      "aria-label",
+      "LifeOS AI Sophia"
+    );
+
+    bottom.innerHTML =
+      '<div class="lifeos-approved-bottom-title-v5">' +
+        'LifeOS-AI<br>Sophia' +
+      '</div>' +
+      '<div class="lifeos-approved-bottom-sub-v5">' +
+        'Synthetic Artificial Intelligence' +
+      '</div>' +
+      '<div class="lifeos-approved-bottom-rule-v5"></div>' +
+      '<div class="lifeos-approved-bottom-credit-v5">' +
+        'Powered by Hansafrique Ltd, built by LifeOsdaily,<br>' +
+        'Engineered &amp; Structured by Tecino’s Channel, 2026 ©.' +
+      '</div>' +
+      '<div class="lifeos-approved-bottom-losai-v5">' +
+        'LOSAI' +
+      '</div>';
+
+    app.appendChild(bottom);
+  }
+
+  function scheduleSettledReveal() {
+    /*
+     * First allow the interface to perform its initial
+     * browser layout and paint.
+     *
+     * Only then begin the requested one-second delay.
+     */
+    window.requestAnimationFrame(function(){
+      window.requestAnimationFrame(function(){
+
+        settleTimer = window.setTimeout(
+          function(){
+            document.body.classList.add(
+              "lifeos-approved-settled-v5"
+            );
+          },
+          1000
+        );
+
+      });
+    });
+  }
+
+  function initialise() {
+    app = document.getElementById("voiceApp");
+
+    if (!app) {
+      /*
+       * Some existing versions use <main> as the
+       * voice composition root.
+       */
+      app = document.querySelector("main");
+    }
+
+    if (!app) return;
+
+    buildBottomIdentity();
+    scheduleSettledReveal();
+
+    /*
+     * IMPORTANT:
+     *
+     * This exact event name is dispatched by the existing
+     * gemini_live_v1.js runtime.
+     *
+     * We do NOT manufacture a successful connection.
+     */
+    window.addEventListener(
+      "lifeos-voice-phase",
+      function(event) {
+
+        var phase =
+          event &&
+          event.detail &&
+          event.detail.phase
+            ? String(event.detail.phase)
+            : "idle";
+
+        setPhase(phase);
+      }
+    );
+
+    setPhase("idle");
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initialise,
+      { once:true }
+    );
+  } else {
+    initialise();
+  }
+}());
+</script>
+
 </body>
 </html>
