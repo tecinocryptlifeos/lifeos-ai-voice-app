@@ -55,7 +55,7 @@ html.lifeos-auth-pending::after {
   filter:
     drop-shadow(0 0 12px rgba(234,190,83,.32))
     drop-shadow(0 12px 28px rgba(0,0,0,.62));
-  animation:lifeosPremiumBridgePulse 1.45s ease-in-out infinite;
+  animation:losaiShieldBreathV1 3.8s cubic-bezier(.42,0,.58,1) infinite;
 }
 
 html.lifeos-auth-ready body {
@@ -63,14 +63,22 @@ html.lifeos-auth-ready body {
   opacity:1 !important;
 }
 
-@keyframes lifeosPremiumBridgePulse {
+@keyframes losaiShieldBreathV1 {
   0%,100% {
-    transform:translate(-50%,-58%) scale(.96);
-    opacity:.78;
+    transform:translate(-50%,-58%) scale(.985);
+    opacity:.90;
+    filter:
+      drop-shadow(0 0 8px rgba(244,199,93,.22))
+      drop-shadow(0 12px 28px rgba(0,0,0,.62));
   }
+
   50% {
-    transform:translate(-50%,-58%) scale(1);
+    transform:translate(-50%,-58%) scale(1.018);
     opacity:1;
+    filter:
+      drop-shadow(0 0 14px rgba(255,215,105,.34))
+      drop-shadow(0 0 23px rgba(244,199,93,.12))
+      drop-shadow(0 12px 28px rgba(0,0,0,.62));
   }
 }
 

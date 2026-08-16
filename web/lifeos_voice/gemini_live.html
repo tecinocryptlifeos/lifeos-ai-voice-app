@@ -55,7 +55,7 @@ html.lifeos-auth-pending::after {
   filter:
     drop-shadow(0 0 12px rgba(234,190,83,.32))
     drop-shadow(0 12px 28px rgba(0,0,0,.62));
-  animation:lifeosPremiumBridgePulse 1.45s ease-in-out infinite;
+  animation:losaiShieldBreathV1 3.8s cubic-bezier(.42,0,.58,1) infinite;
 }
 
 html.lifeos-auth-ready body {
@@ -63,14 +63,22 @@ html.lifeos-auth-ready body {
   opacity:1 !important;
 }
 
-@keyframes lifeosPremiumBridgePulse {
+@keyframes losaiShieldBreathV1 {
   0%,100% {
-    transform:translate(-50%,-58%) scale(.96);
-    opacity:.78;
+    transform:translate(-50%,-58%) scale(.985);
+    opacity:.90;
+    filter:
+      drop-shadow(0 0 8px rgba(244,199,93,.22))
+      drop-shadow(0 12px 28px rgba(0,0,0,.62));
   }
+
   50% {
-    transform:translate(-50%,-58%) scale(1);
+    transform:translate(-50%,-58%) scale(1.018);
     opacity:1;
+    filter:
+      drop-shadow(0 0 14px rgba(255,215,105,.34))
+      drop-shadow(0 0 23px rgba(244,199,93,.12))
+      drop-shadow(0 12px 28px rgba(0,0,0,.62));
   }
 }
 
@@ -763,6 +771,224 @@ body.lifeos-voice-footer-ready #voiceApp .lifeos-voice-footer{
   }
 }());
 </script>
+
+
+<!-- LOSAI_PREMIUM_VISUAL_PHASE1_FINAL -->
+<style id="losai-premium-visual-phase1-final">
+
+/* =========================================================
+   SECTION 2 — PREMIUM GOLD AMBIENT / AURA
+   The static background image and Sophia orb remain untouched.
+   Only existing ambient overlay elements receive motion.
+   ========================================================= */
+
+body.lifeos-voice-active main {
+  position:relative !important;
+  isolation:isolate !important;
+}
+
+body.lifeos-voice-active .lifeos-ambient-motion-v2 {
+  position:absolute !important;
+  inset:0 !important;
+  z-index:1 !important;
+  overflow:hidden !important;
+  pointer-events:none !important;
+  border-radius:inherit !important;
+}
+
+body.lifeos-voice-active #voiceApp,
+body.lifeos-voice-active #authGate {
+  position:relative !important;
+  z-index:3 !important;
+}
+
+.lifeos-gold-wave-v2,
+.lifeos-hand-glow-v2 {
+  position:absolute !important;
+  display:block !important;
+  pointer-events:none !important;
+  border-radius:50% !important;
+  mix-blend-mode:screen !important;
+}
+
+.lifeos-gold-wave-v2.wave-one {
+  left:50% !important;
+  top:27% !important;
+  width:72% !important;
+  height:48% !important;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255,219,118,.075) 0%,
+      rgba(239,176,43,.040) 35%,
+      transparent 70%
+    ) !important;
+
+  filter:blur(16px) !important;
+
+  animation:
+    losaiVoiceAmbientOne
+    18s
+    cubic-bezier(.42,0,.58,1)
+    infinite !important;
+}
+
+.lifeos-gold-wave-v2.wave-two {
+  left:50% !important;
+  top:41% !important;
+  width:52% !important;
+  height:36% !important;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(255,228,147,.060) 0%,
+      rgba(226,150,21,.030) 42%,
+      transparent 72%
+    ) !important;
+
+  filter:blur(13px) !important;
+
+  animation:
+    losaiVoiceAmbientTwo
+    22s
+    cubic-bezier(.42,0,.58,1)
+    infinite !important;
+}
+
+.lifeos-hand-glow-v2.hand-left {
+  left:10% !important;
+  bottom:8% !important;
+  width:31% !important;
+  height:22% !important;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(246,195,71,.065),
+      transparent 68%
+    ) !important;
+
+  filter:blur(14px) !important;
+
+  animation:
+    losaiVoiceGlow
+    20s
+    cubic-bezier(.42,0,.58,1)
+    infinite !important;
+}
+
+.lifeos-hand-glow-v2.hand-right {
+  right:10% !important;
+  bottom:8% !important;
+  width:31% !important;
+  height:22% !important;
+
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(246,195,71,.065),
+      transparent 68%
+    ) !important;
+
+  filter:blur(14px) !important;
+
+  animation:
+    losaiVoiceGlow
+    20s
+    2s
+    cubic-bezier(.42,0,.58,1)
+    infinite !important;
+}
+
+@keyframes losaiVoiceAmbientOne {
+  0%,100% {
+    opacity:.34;
+    transform:translate(-50%,0) scale(.985);
+  }
+
+  50% {
+    opacity:.52;
+    transform:translate(-50%,0) scale(1.018);
+  }
+}
+
+@keyframes losaiVoiceAmbientTwo {
+  0%,100% {
+    opacity:.24;
+    transform:translate(-50%,0) scale(.99);
+  }
+
+  50% {
+    opacity:.42;
+    transform:translate(-50%,0) scale(1.014);
+  }
+}
+
+@keyframes losaiVoiceGlow {
+  0%,100% {
+    opacity:.20;
+    transform:scale(.985);
+  }
+
+  50% {
+    opacity:.38;
+    transform:scale(1.018);
+  }
+}
+
+/* =========================================================
+   SECTION 3 — HEADER POLISH
+   Slow logo shimmer + slight Welcome/surname enlargement.
+   ========================================================= */
+
+#voiceApp .lifeos-final-header-logo-v7 img {
+  animation:
+    losaiVoiceLogoShimmer
+    9.2s
+    cubic-bezier(.42,0,.58,1)
+    infinite !important;
+}
+
+@keyframes losaiVoiceLogoShimmer {
+  0%,100% {
+    filter:
+      drop-shadow(0 0 3px rgba(239,180,44,.08))
+      drop-shadow(0 5px 12px rgba(0,0,0,.44));
+  }
+
+  50% {
+    filter:
+      drop-shadow(0 0 8px rgba(255,214,104,.25))
+      drop-shadow(0 0 15px rgba(239,180,44,.08))
+      drop-shadow(0 5px 12px rgba(0,0,0,.44));
+  }
+}
+
+#voiceApp .lifeos-final-user-v7 strong {
+  font-size:18px !important;
+}
+
+#voiceApp #userIdentity {
+  max-width:150px !important;
+  font-size:13px !important;
+  line-height:1.08 !important;
+}
+
+/* =========================================================
+   ACCESSIBILITY
+   ========================================================= */
+
+@media (prefers-reduced-motion:reduce) {
+  .lifeos-gold-wave-v2,
+  .lifeos-hand-glow-v2,
+  #voiceApp .lifeos-final-header-logo-v7 img {
+    animation:none !important;
+  }
+}
+
+</style>
 
 </body>
 </html>
