@@ -1125,82 +1125,105 @@ html.lifeos-voice-page-hidden .orb::after {
 </script>
 <!-- LIFEOS_PASSWORD_VISIBILITY_V1:SCRIPT_END -->
 
-<style id="losai-approved-voice-interface-v5">
-/* LOSAI_APPROVED_VOICE_INTERFACE_V5 */
 
-/*
- * APPROVED DESIGN PRINCIPLES
- *
- * 1. Exact user-supplied image is the visual foundation.
- * 2. No generated Sophia/person/SVG character.
- * 3. Network animation is driven by the real runtime event.
- * 4. Existing audio engine is untouched.
- * 5. Functional controls remain real HTML controls.
- */
+<style id="losai-voice-architecture-v6">
+/* LOSAI_VOICE_ARCHITECTURE_V6 */
+
+/* ==========================================================
+   CORE PAGE
+
+   The reference screenshot is NOT the page background.
+   It is used only in the cropped visual stage below.
+   ========================================================== */
 
 body,
 body.embedded {
-  background:#020202 !important;
-}
-
-/* ===== MAIN VOICE COMPOSITION ===== */
-
-main,
-#voiceApp {
-  position:relative !important;
-  isolation:isolate !important;
-  overflow:hidden !important;
+  background:
+    radial-gradient(
+      circle at 50% 26%,
+      rgba(225,160,30,.11),
+      transparent 42%
+    ),
+    #020202 !important;
 }
 
 main {
-  width:min(calc(100% - 18px),480px) !important;
-  margin:9px auto !important;
-  padding:0 !important;
-  border:1px solid rgba(232,174,45,.48) !important;
-  border-radius:24px !important;
+  position:relative !important;
+  isolation:isolate !important;
+  overflow:hidden !important;
+
+  width:min(calc(100% - 14px),480px) !important;
+  min-height:auto !important;
+
+  margin:7px auto !important;
+  padding:14px 14px 18px !important;
+
+  display:flex !important;
+  flex-direction:column !important;
+
+  border:1px solid rgba(229,167,38,.48) !important;
+  border-radius:22px !important;
+
   background:
     linear-gradient(
       180deg,
-      rgba(0,0,0,.08) 0%,
-      rgba(0,0,0,.16) 54%,
-      rgba(0,0,0,.36) 100%
-    ),
-    url("/assets/lifeos-voice-conversation-reference.png")
-    center top / cover no-repeat !important;
+      rgba(7,7,7,.94),
+      rgba(2,2,2,.985)
+    ) !important;
+
   box-shadow:
-    0 22px 70px rgba(0,0,0,.62),
-    inset 0 1px 0 rgba(255,211,104,.10) !important;
+    0 22px 70px rgba(0,0,0,.60) !important;
+
+  backdrop-filter:none !important;
+  -webkit-backdrop-filter:none !important;
 }
 
-/*
- * Hide obsolete visual artwork.
- * This does NOT hide functional runtime controls.
- */
+/* ==========================================================
+   REMOVE OBSOLETE VISUAL LAYERS
+   ========================================================== */
+
 .lifeos-ambient-motion-v2,
 .lifeos-clean-orb-v3,
-.lifeos-sophia-release-layer-v3 {
+.lifeos-sophia-release-layer-v3,
+#orb {
   display:none !important;
 }
 
-/* ===== HEADER ===== */
+/*
+ * No upper LifeOS-AI/Sophia title.
+ * Bottom identity is introduced after settlement instead.
+ */
+.lifeos-delayed-brand-v3,
+.lifeos-voice-title-v3,
+.lifeos-voice-subtitle-v3 {
+  display:none !important;
+}
+
+/* ==========================================================
+   AUTHENTICATED HEADER
+   One logo + Welcome + surname + Sign out
+   ========================================================== */
 
 .lifeos-voice-userbar-v1 {
   position:relative !important;
   z-index:30 !important;
+
+  order:1 !important;
+
   width:100% !important;
-  min-height:78px !important;
+  min-height:76px !important;
+
   display:grid !important;
-  grid-template-columns:58px minmax(0,1fr) 76px !important;
+  grid-template-columns:56px minmax(0,1fr) 74px !important;
   align-items:center !important;
-  gap:8px !important;
-  padding:8px 10px !important;
+
+  gap:7px !important;
+  padding:6px 8px 10px !important;
+
   box-sizing:border-box !important;
+
   border:0 !important;
-  background:linear-gradient(
-    180deg,
-    rgba(0,0,0,.34),
-    rgba(0,0,0,.06)
-  ) !important;
+  background:transparent !important;
   box-shadow:none !important;
 }
 
@@ -1208,147 +1231,421 @@ main {
 .lifeos-voice-header-logo-v3 .brand-emblem,
 .lifeos-voice-header-logo-v3 .lifeos-home-logo-link-v1 {
   position:static !important;
-  width:50px !important;
-  height:50px !important;
-  min-width:50px !important;
-  margin:0 !important;
-  padding:0 !important;
+
+  width:48px !important;
+  height:48px !important;
+  min-width:48px !important;
+
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
+
+  padding:0 !important;
+  margin:0 !important;
+
   transform:none !important;
 }
 
 .lifeos-voice-header-logo-v3 img {
   display:block !important;
-  width:48px !important;
-  height:48px !important;
+
+  width:46px !important;
+  height:46px !important;
+
   object-fit:contain !important;
+
+  filter:
+    drop-shadow(
+      0 0 6px rgba(235,177,45,.36)
+    ) !important;
 }
 
 .lifeos-voice-user-welcome-v1 {
   min-width:0 !important;
+
   display:flex !important;
   flex-direction:column !important;
   align-items:center !important;
   justify-content:center !important;
-  gap:3px !important;
+
+  gap:4px !important;
+
   text-align:center !important;
 }
 
 .lifeos-voice-welcome-label-v1 {
-  display:block !important;
-  color:#f1b52d !important;
-  font-size:20px !important;
+  color:#efb12a !important;
+
+  font-size:19px !important;
   font-weight:900 !important;
-  line-height:1.05 !important;
-  letter-spacing:.02em !important;
+
+  line-height:1 !important;
+  letter-spacing:.01em !important;
+
   text-transform:none !important;
 }
 
 .lifeos-voice-user-welcome-v1 #userIdentity {
-  display:block !important;
-  max-width:145px !important;
+  max-width:130px !important;
+
   overflow:hidden !important;
-  color:#fff7e5 !important;
-  font-size:14px !important;
-  font-weight:650 !important;
-  line-height:1.15 !important;
   text-overflow:ellipsis !important;
   white-space:nowrap !important;
+
+  color:#fff6df !important;
+
+  font-size:13px !important;
+  font-weight:650 !important;
+
+  line-height:1.15 !important;
 }
 
 .lifeos-voice-signout-v3 {
   display:flex !important;
-  justify-content:flex-end !important;
   align-items:center !important;
+  justify-content:flex-end !important;
 }
 
 #signOut {
+  padding:4px !important;
+
   border:0 !important;
+
   background:transparent !important;
   box-shadow:none !important;
-  color:#e9ae2b !important;
+
+  color:#efb12a !important;
+
+  font-size:12px !important;
+  font-weight:850 !important;
 }
 
-/* ===== DELAYED TITLE ===== */
+/* ==========================================================
+   CROPPED ARTWORK STAGE
 
-.lifeos-delayed-brand-v3 {
-  position:relative !important;
-  z-index:25 !important;
-  opacity:0 !important;
-  visibility:hidden !important;
+   IMPORTANT:
+   The complete screenshot is never shown.
+   Only the artwork region is visible inside this crop.
+   Therefore its painted Welcome/button/icons/footer cannot
+   duplicate the actual controls.
+   ========================================================== */
+
+.lifeos-art-stage-v6 {
+  position:relative;
+
+  z-index:10;
+
+  order:2;
+
+  width:100%;
+  height:clamp(360px,52svh,440px);
+
+  margin:2px auto 12px;
+
+  overflow:hidden;
+
+  border-radius:20px;
+
+  border:
+    1px solid rgba(225,164,38,.28);
+
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,.02),
+      rgba(0,0,0,.05) 67%,
+      rgba(0,0,0,.48) 100%
+    ),
+    url(
+      "/assets/lifeos-voice-conversation-reference.png"
+    );
+
+  /*
+   * Crop deliberately excludes the painted top header
+   * and lower button/controls/footer from the screenshot.
+   */
+  background-size:
+    150% auto,
+    150% auto;
+
+  background-position:
+    44% 22%,
+    44% 22%;
+
+  background-repeat:no-repeat;
+
+  box-shadow:
+    inset 0 0 50px rgba(0,0,0,.22),
+    0 15px 34px rgba(0,0,0,.28);
+
+  will-change:
+    background-position,
+    filter,
+    transform;
 }
 
-body.lifeos-approved-settled-v5
-.lifeos-delayed-brand-v3 {
-  visibility:visible !important;
+/*
+ * Soft edge masking.
+ */
+.lifeos-art-stage-v6::before {
+  content:"";
+
+  position:absolute;
+  inset:0;
+
+  z-index:3;
+
+  pointer-events:none;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,.14),
+      transparent 12%,
+      transparent 78%,
+      rgba(0,0,0,.52)
+    );
+}
+
+/*
+ * Connection energy traveling from the king-side region
+ * toward the central character/ring.
+ *
+ * This is light only. It does not draw a new person.
+ */
+.lifeos-art-stage-v6::after {
+  content:"";
+
+  position:absolute;
+
+  z-index:4;
+
+  left:7%;
+  top:66%;
+
+  width:72%;
+  height:3px;
+
+  pointer-events:none;
+
+  opacity:0;
+
+  transform:
+    scaleX(.04)
+    rotate(-9deg);
+
+  transform-origin:left center;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,.96),
+      rgba(255,230,133,.98),
+      rgba(231,153,19,.55),
+      transparent
+    );
+
+  box-shadow:
+    0 0 7px rgba(255,242,187,.94),
+    0 0 20px rgba(235,164,26,.68);
+}
+
+/* ==========================================================
+   NETWORK-DRIVEN ARTWORK ANIMATION
+
+   lifeos-voice-phase comes from the existing voice runtime.
+   ========================================================== */
+
+/*
+ * CONNECTING:
+ * Pan from the king side toward the central figure.
+ * One release sequence, not an endless restart.
+ */
+.lifeos-art-stage-v6.lifeos-stage-connecting-v6 {
   animation:
-    lifeosApprovedTitleRevealV5
-    1.35s
-    cubic-bezier(.22,.61,.36,1)
+    lifeosCharacterReleaseV6
+    1.18s
+    cubic-bezier(.16,.84,.32,1)
     forwards;
 }
 
-@keyframes lifeosApprovedTitleRevealV5 {
+.lifeos-art-stage-v6.lifeos-stage-connecting-v6::after {
+  animation:
+    lifeosEnergyTravelV6
+    .90s
+    cubic-bezier(.18,.82,.32,1)
+    forwards;
+}
+
+/*
+ * CONNECTED:
+ * Final central settlement only after the actual
+ * connected event arrives.
+ */
+.lifeos-art-stage-v6.lifeos-stage-connected-v6 {
+  background-position:
+    56% 25%,
+    56% 25%;
+
+  animation:
+    lifeosConnectedSettleV6
+    .58s
+    ease-out
+    both;
+}
+
+.lifeos-art-stage-v6.lifeos-stage-connected-v6::after {
+  opacity:0;
+  animation:none;
+}
+
+/*
+ * Failed/stopped connection returns to idle without
+ * claiming a successful connection.
+ */
+.lifeos-art-stage-v6.lifeos-stage-error-v6 {
+  animation:none !important;
+
+  filter:
+    brightness(.82)
+    saturate(.90);
+}
+
+.lifeos-art-stage-v6.lifeos-stage-error-v6::after {
+  display:none;
+}
+
+@keyframes lifeosCharacterReleaseV6 {
   0% {
-    opacity:0;
-    transform:translateY(8px);
-    filter:blur(3px);
+    background-position:
+      30% 22%,
+      30% 22%;
+
+    filter:
+      brightness(.88)
+      saturate(.92);
+
+    transform:scale(.992);
+  }
+
+  40% {
+    filter:
+      brightness(1.10)
+      saturate(1.08);
   }
 
   100% {
-    opacity:1;
-    transform:translateY(0);
-    filter:blur(0);
+    background-position:
+      54% 25%,
+      54% 25%;
+
+    filter:
+      brightness(1.04)
+      saturate(1.02);
+
+    transform:scale(1);
   }
 }
 
-/* ===== FUNCTIONAL INTERACTION AREA ===== */
+@keyframes lifeosEnergyTravelV6 {
+  0% {
+    opacity:0;
 
-/*
- * Keep the supplied image visually dominant.
- * Controls are positioned over the lower interaction region.
- */
+    transform:
+      scaleX(.04)
+      rotate(-9deg);
+  }
+
+  24% {
+    opacity:1;
+  }
+
+  82% {
+    opacity:.94;
+
+    transform:
+      scaleX(1)
+      rotate(-9deg);
+  }
+
+  100% {
+    opacity:0;
+
+    transform:
+      scaleX(1.06)
+      rotate(-9deg);
+  }
+}
+
+@keyframes lifeosConnectedSettleV6 {
+  0% {
+    filter:brightness(1.16);
+  }
+
+  100% {
+    filter:brightness(1);
+  }
+}
+
+/* ==========================================================
+   SINGLE REAL START BUTTON
+   ========================================================== */
 
 #liveButton {
   position:relative !important;
   z-index:30 !important;
+
+  order:3 !important;
+
   display:block !important;
-  width:min(76%,330px) !important;
-  min-height:54px !important;
-  margin:
-    clamp(500px,61svh,650px)
-    auto
-    12px !important;
+
+  width:min(78%,330px) !important;
+  min-height:52px !important;
+
+  margin:4px auto 10px !important;
+  padding:10px 16px !important;
+
   border:0 !important;
   border-radius:17px !important;
+
   background:
     linear-gradient(
       180deg,
       #f5c653,
-      #d6941d
+      #d4921a
     ) !important;
+
   color:#181005 !important;
+
   font-size:15px !important;
   font-weight:900 !important;
+
   box-shadow:
-    0 9px 25px rgba(0,0,0,.38) !important;
+    0 8px 22px rgba(0,0,0,.35) !important;
 }
 
-/* ===== ICON-ONLY CONTROLS ===== */
+/* ==========================================================
+   SINGLE ICON-ONLY CONTROL ROW
+   ========================================================== */
 
 .lifeos-premium-controls-v1,
 .controls {
   position:relative !important;
   z-index:30 !important;
+
+  order:4 !important;
+
   width:100% !important;
+
   display:flex !important;
   align-items:center !important;
   justify-content:center !important;
-  gap:44px !important;
-  margin:0 auto 10px !important;
+
+  gap:40px !important;
+
+  margin:0 auto 9px !important;
   padding:0 !important;
+
   border:0 !important;
   background:transparent !important;
   box-shadow:none !important;
@@ -1359,78 +1656,79 @@ body.lifeos-approved-settled-v5
 #outputButton,
 .lifeos-icon-control-v1,
 .control {
-  width:46px !important;
-  height:46px !important;
-  min-width:46px !important;
-  min-height:46px !important;
-  flex:0 0 46px !important;
+  width:44px !important;
+  height:44px !important;
+
+  min-width:44px !important;
+  min-height:44px !important;
+
+  flex:0 0 44px !important;
+
   display:grid !important;
   place-items:center !important;
+
   padding:7px !important;
   margin:0 !important;
+
   border:0 !important;
   border-radius:50% !important;
+
   outline:0 !important;
+
   background:transparent !important;
   box-shadow:none !important;
-  color:#efb42d !important;
+
+  color:#efb12a !important;
+
+  font-size:0 !important;
+
   appearance:none !important;
   -webkit-appearance:none !important;
-}
-
-#micButton:hover,
-#speakerButton:hover,
-#outputButton:hover,
-#micButton:focus-visible,
-#speakerButton:focus-visible,
-#outputButton:focus-visible {
-  background:transparent !important;
-  box-shadow:none !important;
-  color:#ffd76f !important;
-}
-
-#micButton:active,
-#speakerButton:active,
-#outputButton:active {
-  transform:scale(.92);
 }
 
 .lifeos-control-label-v1 {
   display:none !important;
 }
 
-/* ===== VOLUME: ICON + SLIDER ONLY ===== */
+.lifeos-control-icon-v1,
+.lifeos-control-icon-v1 svg {
+  width:28px !important;
+  height:28px !important;
+}
+
+/* ==========================================================
+   VOLUME — ICON + SLIDER ONLY
+   ========================================================== */
 
 .lifeos-volume-icon-only-v3,
 .lifeos-premium-volume-control-v1,
 .lifeos-volume-control {
   position:relative !important;
+
   z-index:30 !important;
+
+  order:5 !important;
+
   width:min(88%,390px) !important;
-  margin:2px auto !important;
-  padding:2px !important;
+
+  margin:0 auto 3px !important;
+  padding:2px 0 !important;
+
   display:grid !important;
-  grid-template-columns:30px minmax(100px,1fr) !important;
+
+  grid-template-columns:
+    28px
+    minmax(100px,1fr) !important;
+
   align-items:center !important;
+
   gap:10px !important;
+
   border:0 !important;
   border-radius:0 !important;
+
   background:transparent !important;
   box-shadow:none !important;
-}
-
-.lifeos-volume-icon-v1 {
-  width:25px !important;
-  height:25px !important;
-  display:grid !important;
-  place-items:center !important;
-  color:#efb42d !important;
-}
-
-#volumeControl {
-  width:100% !important;
-  margin:0 !important;
-  accent-color:#e9ae2b !important;
 }
 
 .lifeos-volume-heading-v1 {
@@ -1438,262 +1736,197 @@ body.lifeos-approved-settled-v5
 }
 
 .lifeos-volume-heading-v1
-> span:not(.lifeos-volume-icon-v1),
-.lifeos-volume-value-hidden-v3,
-#volumeValue {
+> span:not(.lifeos-volume-icon-v1) {
   display:none !important;
 }
 
-/* ===== STATUS ===== */
+.lifeos-volume-icon-v1 {
+  width:25px !important;
+  height:25px !important;
+
+  display:grid !important;
+  place-items:center !important;
+
+  color:#efb12a !important;
+}
+
+.lifeos-volume-icon-v1 svg {
+  width:25px !important;
+  height:25px !important;
+
+  stroke:currentColor !important;
+}
+
+#volumeControl {
+  width:100% !important;
+
+  margin:0 !important;
+
+  accent-color:#e9aa25 !important;
+}
+
+#volumeValue,
+.lifeos-volume-value-hidden-v3 {
+  display:none !important;
+}
+
+/* ==========================================================
+   STATUS
+   ========================================================== */
 
 #status {
   position:relative !important;
+
   z-index:30 !important;
-  min-height:20px !important;
-  margin:10px 12px 0 !important;
+
+  order:6 !important;
+
+  min-height:18px !important;
+
+  margin:7px 10px 0 !important;
+
   font-size:11px !important;
+  line-height:1.35 !important;
+
+  text-align:center !important;
 }
 
 #outputLabel {
   position:relative !important;
+
   z-index:30 !important;
-  font-size:10px !important;
+
+  order:7 !important;
+
+  min-height:15px !important;
+
+  margin:3px 0 2px !important;
+
+  font-size:9px !important;
+
+  text-align:center !important;
 }
 
-/* ==================================================
-   REAL NETWORK-SYNCHRONISED VISUAL EFFECT
-   ================================================== */
+/* ==========================================================
+   DELAYED BOTTOM IDENTITY
 
-#voiceApp::before {
-  content:"";
-  position:absolute;
-  z-index:12;
-  left:0;
-  right:0;
-  top:15%;
-  height:55%;
-  pointer-events:none;
-  opacity:0;
-  transform:scale(.96);
-  background:
-    radial-gradient(
-      circle at 55% 50%,
-      rgba(255,220,113,.00) 0%,
-      rgba(235,164,25,.00) 32%,
-      transparent 66%
-    );
-}
+   Hidden initially.
+   Two paint frames -> one full second -> reveal.
+   ========================================================== */
 
-/*
- * Bottom energy line.
- * It exists only while the REAL runtime says "connecting".
- */
-#voiceApp::after {
-  content:"";
-  position:absolute;
-  z-index:13;
-  left:11%;
-  bottom:26%;
-  width:78%;
-  height:2px;
-  pointer-events:none;
-  opacity:0;
-  transform:scaleX(.04);
-  transform-origin:center;
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(237,172,39,.18),
-      rgba(255,244,184,.98),
-      rgba(237,172,39,.18),
-      transparent
-    );
-  box-shadow:
-    0 0 8px rgba(255,232,141,.72),
-    0 0 19px rgba(231,160,25,.46);
-}
-
-/* REAL CONNECTING EVENT */
-
-#voiceApp.lifeos-approved-connecting-v5::before {
-  opacity:1;
-  animation:
-    lifeosApprovedEnergyV5
-    1.15s
-    ease-in-out
-    infinite;
-}
-
-#voiceApp.lifeos-approved-connecting-v5::after {
-  opacity:1;
-  animation:
-    lifeosApprovedBottomEnergyV5
-    .90s
-    ease-in-out
-    infinite;
-}
-
-/* REAL CONNECTED EVENT */
-
-#voiceApp.lifeos-approved-connected-v5::before {
-  opacity:.60;
-  background:
-    radial-gradient(
-      circle at 55% 50%,
-      rgba(255,223,121,.23) 0%,
-      rgba(234,164,29,.10) 31%,
-      transparent 65%
-    );
-  animation:
-    lifeosApprovedConnectedBreathV5
-    2.8s
-    ease-in-out
-    infinite;
-}
-
-#voiceApp.lifeos-approved-connected-v5::after {
-  opacity:0;
-  animation:none;
-}
-
-#voiceApp.lifeos-approved-error-v5::before,
-#voiceApp.lifeos-approved-error-v5::after {
-  opacity:0 !important;
-  animation:none !important;
-}
-
-@keyframes lifeosApprovedEnergyV5 {
-  0%,100% {
-    opacity:.20;
-    transform:scale(.96);
-  }
-
-  50% {
-    opacity:.76;
-    transform:scale(1.025);
-    background:
-      radial-gradient(
-        circle at 55% 50%,
-        rgba(255,226,128,.27),
-        rgba(229,155,21,.10) 32%,
-        transparent 67%
-      );
-  }
-}
-
-@keyframes lifeosApprovedBottomEnergyV5 {
-  0% {
-    opacity:.10;
-    transform:scaleX(.04);
-  }
-
-  45% {
-    opacity:.92;
-  }
-
-  100% {
-    opacity:.16;
-    transform:scaleX(1);
-  }
-}
-
-@keyframes lifeosApprovedConnectedBreathV5 {
-  0%,100% {
-    opacity:.35;
-    transform:scale(.985);
-  }
-
-  50% {
-    opacity:.62;
-    transform:scale(1.015);
-  }
-}
-
-/* ==================================================
-   DELAYED BOTTOM IDENTITY / FOOTER
-   ================================================== */
-
-.lifeos-approved-bottom-v5 {
+.lifeos-bottom-v6 {
   position:relative;
+
   z-index:30;
+
+  order:8;
+
   width:100%;
-  margin:22px auto 16px;
-  padding:0 14px;
-  box-sizing:border-box;
+
+  margin:18px auto 3px;
+  padding:0 10px;
+
   text-align:center;
+
   opacity:0;
   visibility:hidden;
-  transform:translateY(12px);
+
+  transform:translateY(10px);
 }
 
-body.lifeos-approved-settled-v5
-.lifeos-approved-bottom-v5 {
+body.lifeos-v6-settled
+.lifeos-bottom-v6 {
   visibility:visible;
+
   animation:
-    lifeosApprovedFooterRevealV5
-    1.25s
+    lifeosBottomRevealV6
+    1.30s
     cubic-bezier(.22,.61,.36,1)
     forwards;
 }
 
-.lifeos-approved-bottom-title-v5 {
-  color:#eaae27;
-  font-size:clamp(27px,8vw,40px);
+.lifeos-bottom-title-v6 {
+  color:#e9a825;
+
+  font-size:
+    clamp(25px,7.4vw,38px);
+
   font-weight:950;
+
   line-height:.96;
+
   letter-spacing:-.035em;
 }
 
-.lifeos-approved-bottom-sub-v5 {
+.lifeos-bottom-sub-v6 {
   margin-top:7px;
-  color:#fff8e8;
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:.04em;
+
+  color:rgba(255,248,231,.82);
+
+  font-size:9px;
+  font-weight:650;
+
+  letter-spacing:.07em;
 }
 
-.lifeos-approved-bottom-rule-v5 {
-  width:82%;
+.lifeos-bottom-rule-v6 {
+  width:78%;
   height:1px;
-  margin:10px auto;
+
+  margin:9px auto;
+
   transform:scaleX(0);
+
   background:
     linear-gradient(
       90deg,
       transparent,
-      rgba(232,169,39,.78),
+      rgba(224,160,35,.74),
       transparent
     );
 }
 
-body.lifeos-approved-settled-v5
-.lifeos-approved-bottom-rule-v5 {
+body.lifeos-v6-settled
+.lifeos-bottom-rule-v6 {
   animation:
-    lifeosApprovedRuleV5
-    .90s
-    .30s
+    lifeosBottomRuleV6
+    .9s
+    .32s
     ease
     forwards;
 }
 
-.lifeos-approved-bottom-credit-v5 {
-  color:rgba(255,247,226,.60);
+.lifeos-bottom-credit-v6 {
+  color:rgba(255,247,225,.46);
+
+  font-size:8.5px;
+
+  line-height:1.4;
+}
+
+.lifeos-bottom-losai-v6 {
+  margin-top:6px;
+
+  color:rgba(221,158,34,.60);
+
   font-size:9px;
-  line-height:1.45;
+
+  letter-spacing:.40em;
 }
 
-.lifeos-approved-bottom-losai-v5 {
-  margin-top:5px;
-  color:#d89d24;
-  font-size:10px;
-  letter-spacing:.42em;
+/*
+ * Old footer/title must never duplicate V6.
+ */
+.lifeos-delayed-footer-v3,
+.lifeos-bottom-brand-v1,
+.lifeos-voice-footer {
+  display:none !important;
 }
 
-@keyframes lifeosApprovedFooterRevealV5 {
+@keyframes lifeosBottomRevealV6 {
   from {
     opacity:0;
-    transform:translateY(12px);
+    transform:translateY(10px);
   }
 
   to {
@@ -1702,136 +1935,191 @@ body.lifeos-approved-settled-v5
   }
 }
 
-@keyframes lifeosApprovedRuleV5 {
+@keyframes lifeosBottomRuleV6 {
   to {
     transform:scaleX(1);
   }
 }
 
-/*
- * Hide the obsolete footer so there is only one delayed
- * bottom identity presentation.
- */
-.lifeos-delayed-footer-v3,
-.lifeos-voice-footer,
-.lifeos-bottom-brand-v1 {
-  display:none !important;
-}
+/* ==========================================================
+   MOBILE
+   ========================================================== */
 
-/* ===== MOBILE ===== */
+@media(max-width:520px) {
 
-@media (max-width:520px) {
+  body {
+    padding:
+      max(5px,env(safe-area-inset-top))
+      5px
+      max(8px,env(safe-area-inset-bottom))
+      5px !important;
+  }
 
   main {
-    width:calc(100% - 10px) !important;
-    margin:5px auto !important;
-    border-radius:20px !important;
+    width:100% !important;
+
+    margin:0 auto !important;
+
+    padding:
+      10px
+      10px
+      15px !important;
+
+    border-radius:19px !important;
   }
 
   .lifeos-voice-userbar-v1 {
-    grid-template-columns:50px minmax(0,1fr) 66px !important;
-    min-height:72px !important;
-    padding:7px 8px !important;
+    grid-template-columns:
+      48px
+      minmax(0,1fr)
+      63px !important;
+
+    min-height:68px !important;
+
+    padding:
+      4px
+      5px
+      8px !important;
   }
 
   .lifeos-voice-header-logo-v3,
   .lifeos-voice-header-logo-v3 .brand-emblem,
   .lifeos-voice-header-logo-v3 .lifeos-home-logo-link-v1 {
-    width:44px !important;
-    height:44px !important;
-    min-width:44px !important;
+    width:42px !important;
+    height:42px !important;
+    min-width:42px !important;
   }
 
   .lifeos-voice-header-logo-v3 img {
-    width:42px !important;
-    height:42px !important;
+    width:40px !important;
+    height:40px !important;
   }
 
   .lifeos-voice-welcome-label-v1 {
-    font-size:18px !important;
+    font-size:17px !important;
   }
 
   .lifeos-voice-user-welcome-v1 #userIdentity {
     max-width:105px !important;
-    font-size:13px !important;
+    font-size:12px !important;
+  }
+
+  #signOut {
+    font-size:11px !important;
+  }
+
+  .lifeos-art-stage-v6 {
+    height:
+      clamp(
+        340px,
+        50svh,
+        420px
+      );
+
+    /*
+     * The same crop remains intentionally inside
+     * the artwork area of the reference.
+     */
+    background-size:
+      150% auto,
+      150% auto;
+
+    background-position:
+      44% 22%,
+      44% 22%;
   }
 
   #liveButton {
-    width:78% !important;
-    margin-top:clamp(470px,59svh,610px) !important;
+    width:80% !important;
+
+    min-height:50px !important;
+
+    margin-top:2px !important;
+
+    font-size:14px !important;
   }
 
   .lifeos-premium-controls-v1,
   .controls {
-    gap:36px !important;
+    gap:34px !important;
   }
 }
 
-@media (prefers-reduced-motion:reduce) {
+@media(prefers-reduced-motion:reduce) {
 
-  #voiceApp::before,
-  #voiceApp::after,
-  .lifeos-delayed-brand-v3,
-  .lifeos-approved-bottom-v5,
-  .lifeos-approved-bottom-rule-v5 {
+  .lifeos-art-stage-v6,
+  .lifeos-art-stage-v6::after,
+  .lifeos-bottom-v6,
+  .lifeos-bottom-rule-v6 {
     animation-duration:.001ms !important;
     animation-iteration-count:1 !important;
   }
 }
+
 </style>
 
-<script id="losai-approved-voice-interface-v5-script">
+<script id="losai-voice-architecture-v6-script">
 (function(){
   "use strict";
 
-  var app = null;
-  var bottom = null;
-  var settleTimer = null;
+  var root = null;
+  var stage = null;
 
-  function setPhase(phase) {
-    if (!app) return;
+  function buildStage() {
+    var liveButton =
+      document.getElementById("liveButton");
 
-    app.classList.remove(
-      "lifeos-approved-connecting-v5",
-      "lifeos-approved-connected-v5",
-      "lifeos-approved-error-v5"
-    );
-
-    if (phase === "connecting") {
-      app.classList.add(
-        "lifeos-approved-connecting-v5"
-      );
-      return;
+    if (!liveButton || !liveButton.parentNode) {
+      return false;
     }
-
-    if (phase === "connected") {
-      app.classList.add(
-        "lifeos-approved-connected-v5"
-      );
-      return;
-    }
-
-    if (phase === "error") {
-      app.classList.add(
-        "lifeos-approved-error-v5"
-      );
-    }
-  }
-
-  function buildBottomIdentity() {
-    if (!app) return;
 
     if (
       document.querySelector(
-        ".lifeos-approved-bottom-v5"
+        ".lifeos-art-stage-v6"
+      )
+    ) {
+      return true;
+    }
+
+    stage =
+      document.createElement("section");
+
+    stage.className =
+      "lifeos-art-stage-v6";
+
+    stage.setAttribute(
+      "aria-label",
+      "LifeOS voice conversation visual"
+    );
+
+    /*
+     * Stage is intentionally image-only.
+     * No second button, text, control or footer is created.
+     */
+    liveButton.parentNode.insertBefore(
+      stage,
+      liveButton
+    );
+
+    return true;
+  }
+
+  function buildBottom() {
+    if (!root) return;
+
+    if (
+      document.querySelector(
+        ".lifeos-bottom-v6"
       )
     ) {
       return;
     }
 
-    bottom = document.createElement("section");
+    var bottom =
+      document.createElement("section");
+
     bottom.className =
-      "lifeos-approved-bottom-v5";
+      "lifeos-bottom-v6";
 
     bottom.setAttribute(
       "aria-label",
@@ -1839,70 +2127,111 @@ body.lifeos-approved-settled-v5
     );
 
     bottom.innerHTML =
-      '<div class="lifeos-approved-bottom-title-v5">' +
-        'LifeOS-AI<br>Sophia' +
+      '<div class="lifeos-bottom-title-v6">' +
+        'LifeOS-AI Sophia' +
       '</div>' +
-      '<div class="lifeos-approved-bottom-sub-v5">' +
+
+      '<div class="lifeos-bottom-sub-v6">' +
         'Synthetic Artificial Intelligence' +
       '</div>' +
-      '<div class="lifeos-approved-bottom-rule-v5"></div>' +
-      '<div class="lifeos-approved-bottom-credit-v5">' +
-        'Powered by Hansafrique Ltd, built by LifeOsdaily,<br>' +
+
+      '<div class="lifeos-bottom-rule-v6"></div>' +
+
+      '<div class="lifeos-bottom-credit-v6">' +
+        'Powered by Hansafrique Ltd, built by LifeOsdaily, ' +
         'Engineered &amp; Structured by Tecino’s Channel, 2026 ©.' +
       '</div>' +
-      '<div class="lifeos-approved-bottom-losai-v5">' +
+
+      '<div class="lifeos-bottom-losai-v6">' +
         'LOSAI' +
       '</div>';
 
-    app.appendChild(bottom);
+    root.appendChild(bottom);
   }
 
-  function scheduleSettledReveal() {
-    /*
-     * First allow the interface to perform its initial
-     * browser layout and paint.
-     *
-     * Only then begin the requested one-second delay.
-     */
-    window.requestAnimationFrame(function(){
-      window.requestAnimationFrame(function(){
+  function resetStageClasses() {
+    if (!stage) return;
 
-        settleTimer = window.setTimeout(
-          function(){
-            document.body.classList.add(
-              "lifeos-approved-settled-v5"
-            );
-          },
-          1000
-        );
+    stage.classList.remove(
+      "lifeos-stage-connecting-v6",
+      "lifeos-stage-connected-v6",
+      "lifeos-stage-error-v6"
+    );
+  }
+
+  function applyNetworkPhase(phase) {
+    if (!stage) return;
+
+    resetStageClasses();
+
+    if (phase === "connecting") {
+
+      stage.classList.add(
+        "lifeos-stage-connecting-v6"
+      );
+
+      return;
+    }
+
+    if (phase === "connected") {
+
+      stage.classList.add(
+        "lifeos-stage-connected-v6"
+      );
+
+      return;
+    }
+
+    if (phase === "error") {
+
+      stage.classList.add(
+        "lifeos-stage-error-v6"
+      );
+    }
+  }
+
+  function revealBottomAfterSettle() {
+
+    requestAnimationFrame(function(){
+
+      requestAnimationFrame(function(){
+
+        window.setTimeout(function(){
+
+          document.body.classList.add(
+            "lifeos-v6-settled"
+          );
+
+        },1000);
 
       });
+
     });
+
   }
 
   function initialise() {
-    app = document.getElementById("voiceApp");
 
-    if (!app) {
-      /*
-       * Some existing versions use <main> as the
-       * voice composition root.
-       */
-      app = document.querySelector("main");
-    }
+    root =
+      document.getElementById("voiceApp") ||
+      document.querySelector("main");
 
-    if (!app) return;
+    if (!root) return;
 
-    buildBottomIdentity();
-    scheduleSettledReveal();
+    if (!buildStage()) return;
+
+    stage =
+      document.querySelector(
+        ".lifeos-art-stage-v6"
+      );
+
+    buildBottom();
+
+    revealBottomAfterSettle();
 
     /*
-     * IMPORTANT:
-     *
-     * This exact event name is dispatched by the existing
-     * gemini_live_v1.js runtime.
-     *
-     * We do NOT manufacture a successful connection.
+     * EXACT existing runtime event.
+     * No timer is allowed to fake connection success.
      */
     window.addEventListener(
       "lifeos-voice-phase",
@@ -1915,22 +2244,28 @@ body.lifeos-approved-settled-v5
             ? String(event.detail.phase)
             : "idle";
 
-        setPhase(phase);
+        applyNetworkPhase(phase);
       }
     );
 
-    setPhase("idle");
+    applyNetworkPhase("idle");
   }
 
-  if (document.readyState === "loading") {
+  if (
+    document.readyState === "loading"
+  ) {
+
     document.addEventListener(
       "DOMContentLoaded",
       initialise,
-      { once:true }
+      {once:true}
     );
+
   } else {
+
     initialise();
   }
+
 }());
 </script>
 
