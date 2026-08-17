@@ -232,9 +232,7 @@ test("a failed mutation is never replayed to Northflank", async () => {
   assert.equal(calls.some(item => item.startsWith(NORTHFLANK_ORIGIN)), false);
 });
 
-test("a supported account read routes once to standby when primary is already down", async () => {
-  const calls = [];
-
+test("an account read uses the direct Supabase fallback when primary is already down", async () => {
   const state = healthyState({
     preferred: "northflank",
     render: {
@@ -251,22 +249,13 @@ test("a supported account read routes once to standby when primary is already do
     },
   });
 
+  const selectedProfile = profile();
+
   const env = baseEnv({
     state,
-    fetcher: authFetcher(async (input, options) => {
-      const url = String(input);
-      calls.push(url);
-
-      assert.equal(
-        options.headers.get("X-LifeOS-Gateway-Secret"),
-        "test-gateway-secret",
-      );
-
-      return Response.json({
-        ok: true,
-        origin: "standby",
-      });
-    }),
+    fetcher: authFetcher(() => {
+      throw new Error("The direct profile GET must not reach Render or Northflank");
+    }, selectedProfile),
   });
 
   const response = await gateway.fetch(
@@ -275,26 +264,11 @@ test("a supported account read routes once to standby when primary is already do
   );
 
   assert.equal(response.status, 200);
-
-  assert.deepEqual(
-    await response.json(),
-    {
-      ok: true,
-      origin: "standby",
-    },
-  );
-
-  assert.equal(
-    calls.some(item => item.startsWith(RENDER_ORIGIN)),
-    false,
-  );
-
-  assert.equal(
-    calls.filter(item =>
-      item.startsWith(NORTHFLANK_ORIGIN))
-      .length,
-    1,
-  );
+  assert.deepEqual(await response.json(), {
+    profile: selectedProfile,
+    complete: true,
+    minimum_age: 13,
+  });
 });
 
 // LOSAI_WORKER_CHAT_FALLBACK_V2_TEST
@@ -522,32 +496,147 @@ test("an incomplete account can load its profile through the primary", async () 
   assert.equal(primaryCalls, 1);
 });
 
-test("an account-profile mutation is unavailable instead of spilling to standby", async () => {
-  const calls = [];
+test("an account-profile mutation uses the direct Supabase fallback when primary is down", async () => {
   const state = healthyState({
     preferred: "northflank",
-    render: { name: "render", healthy: false, status: 503, latency_ms: 20 },
-    northflank: { name: "northflank", healthy: true, status: 200, latency_ms: 12 },
+    render: {
+      name: "render",
+      healthy: false,
+      status: 503,
+      latency_ms: 20,
+    },
+    northflank: {
+      name: "northflank",
+      healthy: true,
+      status: 200,
+      latency_ms: 12,
+    },
   });
+
+  let profileReads = 0;
+  let writtenRow = null;
+
   const env = baseEnv({
     state,
-    fetcher: authFetcher(async input => {
-      calls.push(String(input));
-      return Response.json({ ok: true });
-    }, profile({ first_name: "" })),
-  });
-  const response = await gateway.fetch(authenticated("/api/account-profile", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Idempotency-Key": "cccccccc-dddd-4eee-8fff-aaaaaaaaaaaa",
+    fetcher: async (input, options = {}) => {
+      const url = String(input);
+
+      if (url === `${SUPABASE_ORIGIN}/auth/v1/user`) {
+        return Response.json({
+          id: USER_ID,
+          email: "owner@example.com",
+          app_metadata: {},
+        });
+      }
+
+      if (url.startsWith(`${SUPABASE_ORIGIN}/rest/v1/lifeos_profiles?`)) {
+        if (options.method === "POST") {
+          writtenRow = JSON.parse(options.body);
+          assert.equal(options.headers.apikey, "sb_publishable_test");
+          assert.equal(
+            options.headers.Authorization.startsWith("Bearer "),
+            true,
+          );
+          return new Response(null, { status: 201 });
+        }
+
+        profileReads += 1;
+
+        if (profileReads === 1) {
+          return Response.json([
+            profile({
+              first_name: "",
+              surname: "",
+              country: "",
+              date_of_birth: null,
+              terms_accepted_at: null,
+            }),
+          ]);
+        }
+
+        return Response.json([
+          profile({
+            ...writtenRow,
+            birth_year: null,
+            age_verified_at: null,
+            dob_retention: "eligibility_only",
+            account_status: "active",
+          }),
+        ]);
+      }
+
+      if (
+        url.startsWith(RENDER_ORIGIN) ||
+        url.startsWith(NORTHFLANK_ORIGIN)
+      ) {
+        throw new Error("Direct profile POST must not reach a Python origin");
+      }
+
+      throw new Error(`Unexpected outbound request: ${url}`);
     },
-    body: JSON.stringify({ first_name: "LifeOS" }),
-  }), env);
-  assert.equal(response.status, 503);
-  assert.equal((await response.json()).reason, "NO_COMPATIBLE_ORIGIN");
-  assert.equal(calls.some(item => item.startsWith(RENDER_ORIGIN)), false);
-  assert.equal(calls.some(item => item.startsWith(NORTHFLANK_ORIGIN)), false);
+  });
+
+  const response = await gateway.fetch(
+    authenticated("/api/account-profile", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotency-Key":
+          "cccccccc-dddd-4eee-8fff-aaaaaaaaaaaa",
+      },
+      body: JSON.stringify({
+        first_name: "LifeOS",
+        surname: "Owner",
+        date_of_birth: "1990-08-08",
+        country: "Nigeria",
+        phone: "+234000000000",
+        accept_terms: true,
+        user_id: "00000000-0000-0000-0000-000000000000",
+        email: "attacker@example.com",
+        account_status: "admin",
+        terms_accepted_at: "1999-01-01T00:00:00Z",
+      }),
+    }),
+    env,
+  );
+
+  assert.equal(response.status, 200);
+
+  const data = await response.json();
+  assert.equal(data.complete, true);
+
+  assert.equal(writtenRow.user_id, USER_ID);
+  assert.equal(writtenRow.email, "owner@example.com");
+  assert.equal(writtenRow.first_name, "LifeOS");
+  assert.equal(writtenRow.surname, "Owner");
+  assert.equal(writtenRow.country, "Nigeria");
+  assert.equal(writtenRow.date_of_birth, "1990-08-08");
+
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      writtenRow,
+      "account_status",
+    ),
+    false,
+  );
+
+  assert.equal(
+    Object.prototype.hasOwnProperty.call(
+      writtenRow,
+      "age_verified_at",
+    ),
+    false,
+  );
+
+  assert.notEqual(
+    writtenRow.terms_accepted_at,
+    "1999-01-01T00:00:00Z",
+  );
+
+  assert.equal(
+    Number.isNaN(Date.parse(writtenRow.terms_accepted_at)),
+    false,
+  );
 });
 
 test("five-minute health evaluation stores preferred origin and alerts on change", async () => {

@@ -14,7 +14,7 @@ import {
 import { geminiStatus, issueGeminiToken } from "./gemini.js";
 import { issueChatDecision } from "./chat.js";
 import { currentOriginState, evaluateOrigins, originUrls } from "./health.js";
-import { publicConfig, verifySession } from "./supabase.js";
+import { publicConfig, verifySession, handleAccountProfileDirect } from "./supabase.js";
 
 function preflightResponse(request, env) {
   const headers = responseHeaders(request, env, new Headers({
@@ -211,8 +211,14 @@ async function handleRequest(request, env) {
   }
 
   if (pathname === "/api/account-profile" && ["GET", "POST"].includes(request.method)) {
-    await verifySession(request, env, { profile: "optional" });
-    return compatibilityProxy(request, env, pathname, await currentOriginState(env));
+    const session = await verifySession(request, env, { profile: "optional" });
+    const state = await currentOriginState(env);
+
+    if (state.render?.healthy) {
+      return compatibilityProxy(request, env, pathname, state);
+    }
+
+    return handleAccountProfileDirect(request, env, session);
   }
 
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/audio/")) {
