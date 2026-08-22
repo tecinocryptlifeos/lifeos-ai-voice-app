@@ -18,7 +18,6 @@ REQUIRED = (
     "LIFEOS_API_ORIGIN",
     "SUPABASE_URL",
     "SUPABASE_PUBLISHABLE_KEY",
-    "ORIGIN_STATE_KV_ID",
     "RATE_LIMIT_NAMESPACE_ID",
 )
 
@@ -59,8 +58,6 @@ def main() -> None:
         if item.strip()
     )
 
-    if not re.fullmatch(r"[0-9a-fA-F]{32}", values["ORIGIN_STATE_KV_ID"]):
-        raise SystemExit("ORIGIN_STATE_KV_ID must be a 32-character hexadecimal ID")
     if not re.fullmatch(r"[1-9][0-9]*", values["RATE_LIMIT_NAMESPACE_ID"]):
         raise SystemExit("RATE_LIMIT_NAMESPACE_ID must be a positive integer")
     if not re.fullmatch(
