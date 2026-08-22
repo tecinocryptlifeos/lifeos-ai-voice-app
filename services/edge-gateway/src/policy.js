@@ -15,20 +15,6 @@ export const PUBLIC_COMPATIBILITY_GET_PATHS = new Set([
   "/api/realtime-status",
 ]);
 
-export const NORTHFLANK_GET_PATHS = new Set([
-  "/api/auth-config",
-  "/api/config",
-  "/api/session",
-  "/api/session-status",
-  "/api/account-profile",
-  "/api/gemini-live-status",
-]);
-
-export const NORTHFLANK_MUTATION_PATHS = new Set([
-  "/api/gemini-live-token",
-  "/api/chat-decision",
-]);
-
 export const SAFE_GET_RETRY_PATHS = new Set([
   "/health",
   "/config",
@@ -67,12 +53,6 @@ export function isSafeGetRetry(method, pathname) {
 export function isNeverReplayPath(pathname) {
   const lowered = String(pathname || "").toLowerCase();
   return NEVER_REPLAY_PATH_FRAGMENTS.some(fragment => lowered.includes(fragment));
-}
-
-export function northflankCompatible(method, pathname) {
-  const selected = String(method || "GET").toUpperCase();
-  if (["GET", "HEAD"].includes(selected)) return NORTHFLANK_GET_PATHS.has(pathname);
-  return NORTHFLANK_MUTATION_PATHS.has(pathname);
 }
 
 export function requireIdempotencyKey(request) {
