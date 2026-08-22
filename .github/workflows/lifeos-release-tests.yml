@@ -28,7 +28,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: npm
           cache-dependency-path: services/edge-gateway/package-lock.json
       - name: Install the pinned edge toolchain
@@ -44,7 +44,6 @@ jobs:
           LIFEOS_ALLOWED_ORIGINS: https://preview.pages.dev,https://losai.ng.eu.org
           LIFEOS_PUBLIC_SITE_ORIGIN: https://losai.ng.eu.org
           LIFEOS_API_ORIGIN: https://api.losai.ng.eu.org
-          RENDER_ORIGIN: https://losai.onrender.com
           SUPABASE_URL: https://example.supabase.co
           SUPABASE_PUBLISHABLE_KEY: sb_publishable_example
           ORIGIN_STATE_KV_ID: "11111111111111111111111111111111"
