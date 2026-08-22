@@ -9,6 +9,7 @@ import {
 import { geminiStatus, issueGeminiToken } from "./gemini.js";
 import { issueChatDecision } from "./chat.js";
 import { publicConfig, verifySession } from "./supabase.js";
+import { currentOriginState } from "./health.js";
 
 function preflightResponse(request, env) {
   const headers = responseHeaders(request, env, new Headers({
@@ -20,14 +21,15 @@ function preflightResponse(request, env) {
   return new Response(null, { status: 204, headers });
 }
 
-function publicHealth(request, env) {
+async function publicHealth(request, env) {
+  const state = await currentOriginState(env);
   return jsonResponse(request, env, 200, {
     ok: true,
     gateway: true,
-    preferred_origin: "edge",
-    render_healthy: false,
-    northflank_healthy: false,
-    checked_at: new Date().toISOString(),
+    preferred_origin: state.preferred,
+    render_healthy: Boolean(state.render?.healthy),
+    northflank_healthy: Boolean(state.northflank?.healthy),
+    checked_at: state.checked_at,
     public_site_available_independently: true,
     supabase_is_system_of_record: true,
     voice_token_gateway_available: Boolean(String(env.GEMINI_API_KEY || "").trim()),
