@@ -8,6 +8,8 @@ const USER_ID = "11111111-1111-4111-8111-111111111111";
 const PUBLIC_ORIGIN = "https://losai.ng.eu.org";
 const API_ORIGIN = "https://api.losai.ng.eu.org";
 const SUPABASE_ORIGIN = "https://project.supabase.co";
+const RENDER_ORIGIN = "https://render.example.com";
+const NORTHFLANK_ORIGIN = "https://northflank.example.com";
 
 class MemoryKV {
   constructor(initial = {}) {
@@ -69,6 +71,8 @@ function baseEnv({ fetcher, rateSuccess = true } = {}) {
     LIFEOS_PUBLIC_SITE_ORIGIN: PUBLIC_ORIGIN,
     LIFEOS_API_ORIGIN: API_ORIGIN,
     LIFEOS_GATEWAY_SHARED_SECRET: "test-gateway-secret",
+    RENDER_ORIGIN,
+    NORTHFLANK_ORIGIN,
     SUPABASE_URL: SUPABASE_ORIGIN,
     SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
     LIFEOS_EMAIL_AUTH_ENABLED: "true",
@@ -148,6 +152,76 @@ test("health reports the Cloudflare edge as the active gateway", async () => {
   assert.equal(data.public_site_available_independently, true);
   assert.equal(data.supabase_is_system_of_record, true);
   assert.equal(data.voice_token_gateway_available, true);
+});
+
+test("health prefers Render when its health probe succeeds", async () => {
+  const env = baseEnv({
+    fetcher: async input => {
+      assert.equal(String(input), `${RENDER_ORIGIN}/health`);
+      return Response.json({ ok: true });
+    },
+  });
+  const response = await gateway.fetch(request("/health"), env);
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.preferred_origin, "render");
+  assert.equal(data.render_healthy, true);
+  assert.equal(data.northflank_healthy, false);
+  assert.equal(data.checked_at.length > 0, true);
+  assert.equal(env.ORIGIN_STATE.values.has(ORIGIN_STATE_KEY), true);
+});
+
+test("health falls back to Northflank when Render is unhealthy", async () => {
+  const env = baseEnv({
+    fetcher: async input => {
+      const url = String(input);
+      if (url === `${RENDER_ORIGIN}/health`) return new Response(null, { status: 503 });
+      if (url === `${NORTHFLANK_ORIGIN}/health`) return Response.json({ ok: true });
+      throw new Error(`Unexpected ${url}`);
+    },
+  });
+  const response = await gateway.fetch(request("/health"), env);
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.preferred_origin, "northflank");
+  assert.equal(data.render_healthy, false);
+  assert.equal(data.northflank_healthy, true);
+});
+
+test("health reuses a fresh KV origin decision without probing again", async () => {
+  let probes = 0;
+  const env = baseEnv({
+    fetcher: async () => {
+      probes += 1;
+      return Response.json({ ok: true });
+    },
+  });
+  const cached = {
+    checked_at: new Date().toISOString(),
+    checked_at_ms: Date.now(),
+    preferred: "northflank",
+    render: { name: "render", healthy: false, status: 503, latency_ms: 5 },
+    northflank: { name: "northflank", healthy: true, status: 200, latency_ms: 4 },
+  };
+  await env.ORIGIN_STATE.put(ORIGIN_STATE_KEY, JSON.stringify(cached));
+  const response = await gateway.fetch(request("/health"), env);
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.preferred_origin, "northflank");
+  assert.equal(probes, 0);
+});
+
+test("origin probes send the gateway shared secret", async () => {
+  const env = baseEnv({
+    fetcher: async (input, options) => {
+      assert.equal(String(input), `${RENDER_ORIGIN}/health`);
+      assert.equal(options.headers.get("X-LifeOS-Gateway-Secret"), "test-gateway-secret");
+      return Response.json({ ok: true });
+    },
+  });
+  const response = await gateway.fetch(request("/health"), env);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).preferred_origin, "render");
 });
 
 test("session validation uses Supabase and reports profile completion", async () => {
