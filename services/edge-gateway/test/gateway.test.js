@@ -7,8 +7,6 @@ import { ORIGIN_STATE_KEY } from "../src/health.js";
 const USER_ID = "11111111-1111-4111-8111-111111111111";
 const PUBLIC_ORIGIN = "https://losai.ng.eu.org";
 const API_ORIGIN = "https://api.losai.ng.eu.org";
-const RENDER_ORIGIN = "https://losai.onrender.com";
-const NORTHFLANK_ORIGIN = "https://losai-standby.example.com";
 const SUPABASE_ORIGIN = "https://project.supabase.co";
 
 class MemoryKV {
@@ -64,27 +62,13 @@ function profile(overrides = {}) {
   };
 }
 
-function healthyState(overrides = {}) {
-  return {
-    checked_at: new Date().toISOString(),
-    checked_at_ms: Date.now(),
-    preferred: "render",
-    render: { name: "render", healthy: true, status: 200, latency_ms: 10 },
-    northflank: { name: "northflank", healthy: true, status: 200, latency_ms: 12 },
-    ...overrides,
-  };
-}
-
-function baseEnv({ state = healthyState(), fetcher, rateSuccess = true } = {}) {
-  const kv = new MemoryKV({ [ORIGIN_STATE_KEY]: JSON.stringify(state) });
+function baseEnv({ fetcher, rateSuccess = true } = {}) {
+  const kv = new MemoryKV();
   return {
     LIFEOS_ALLOWED_ORIGINS: PUBLIC_ORIGIN,
     LIFEOS_PUBLIC_SITE_ORIGIN: PUBLIC_ORIGIN,
     LIFEOS_API_ORIGIN: API_ORIGIN,
-    RENDER_ORIGIN,
-    NORTHFLANK_ORIGIN,
     LIFEOS_GATEWAY_SHARED_SECRET: "test-gateway-secret",
-    LIFEOS_FAILOVER_ALERT_WEBHOOK_URL: "https://alerts.example.com/lifeos",
     SUPABASE_URL: SUPABASE_ORIGIN,
     SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
     LIFEOS_EMAIL_AUTH_ENABLED: "true",
@@ -151,6 +135,21 @@ test("public config exposes only public authentication values", async () => {
   assert.equal(JSON.stringify(data).includes("must-not-leak"), false);
 });
 
+test("health reports the Cloudflare edge as the active gateway", async () => {
+  const env = baseEnv();
+  const response = await gateway.fetch(request("/health"), env);
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.ok, true);
+  assert.equal(data.gateway, true);
+  assert.equal(data.preferred_origin, "edge");
+  assert.equal(data.render_healthy, false);
+  assert.equal(data.northflank_healthy, false);
+  assert.equal(data.public_site_available_independently, true);
+  assert.equal(data.supabase_is_system_of_record, true);
+  assert.equal(data.voice_token_gateway_available, true);
+});
+
 test("session validation uses Supabase and reports profile completion", async () => {
   const env = baseEnv({ fetcher: authFetcher(() => { throw new Error("unexpected"); }) });
   const response = await gateway.fetch(authenticated("/api/session"), env);
@@ -192,8 +191,7 @@ test("Gemini token issuance is authenticated, constrained, rate-limited and idem
   assert.equal((await second.json()).idempotent_replay, true);
   assert.equal(tokenCalls, 1);
   assert.equal(env.API_RATE_LIMITER.keys.length, 1);
-  const tokenWrite = env.ORIGIN_STATE.puts.find(item =>
-    item.key.startsWith("token-idempotency:"));
+  const tokenWrite = env.ORIGIN_STATE.puts.find(item => item.key.startsWith("token-idempotency:"));
   assert.equal(tokenWrite.options.expirationTtl, 60);
 });
 
@@ -206,428 +204,6 @@ test("every mutation requires an idempotency key", async () => {
   }), env);
   assert.equal(response.status, 400);
   assert.equal((await response.json()).code, "IDEMPOTENCY_KEY_REQUIRED");
-});
-
-test("a failed mutation is never replayed to Northflank", async () => {
-  const calls = [];
-  const env = baseEnv({
-    fetcher: authFetcher(async input => {
-      calls.push(String(input));
-      if (String(input).startsWith(RENDER_ORIGIN)) throw new Error("render unavailable");
-      if (String(input).startsWith(NORTHFLANK_ORIGIN)) return Response.json({ ok: true });
-      throw new Error("unexpected");
-    }),
-  });
-  const response = await gateway.fetch(authenticated("/api/chat-decision", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Idempotency-Key": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
-    },
-    body: JSON.stringify({ messages: [{ role: "user", content: "Hello" }] }),
-  }), env);
-  assert.equal(response.status, 503);
-  assert.equal((await response.json()).reason, "PRIMARY_MUTATION_NOT_REPLAYED");
-  assert.equal(calls.filter(item => item.startsWith(RENDER_ORIGIN)).length, 1);
-  assert.equal(calls.some(item => item.startsWith(NORTHFLANK_ORIGIN)), false);
-});
-
-test("a supported account read routes once to standby when primary is already down", async () => {
-  const calls = [];
-
-  const state = healthyState({
-    preferred: "northflank",
-    render: {
-      name: "render",
-      healthy: false,
-      status: 503,
-      latency_ms: 20,
-    },
-    northflank: {
-      name: "northflank",
-      healthy: true,
-      status: 200,
-      latency_ms: 12,
-    },
-  });
-
-  const env = baseEnv({
-    state,
-    fetcher: authFetcher(async (input, options) => {
-      const url = String(input);
-      calls.push(url);
-
-      assert.equal(
-        options.headers.get("X-LifeOS-Gateway-Secret"),
-        "test-gateway-secret",
-      );
-
-      return Response.json({
-        ok: true,
-        origin: "standby",
-      });
-    }),
-  });
-
-  const response = await gateway.fetch(
-    authenticated("/api/account-profile"),
-    env,
-  );
-
-  assert.equal(response.status, 200);
-
-  assert.deepEqual(
-    await response.json(),
-    {
-      ok: true,
-      origin: "standby",
-    },
-  );
-
-  assert.equal(
-    calls.some(item => item.startsWith(RENDER_ORIGIN)),
-    false,
-  );
-
-  assert.equal(
-    calls.filter(item =>
-      item.startsWith(NORTHFLANK_ORIGIN))
-      .length,
-    1,
-  );
-});
-
-// LOSAI_WORKER_CHAT_FALLBACK_V2_TEST
-test("a new chat mutation uses the Worker fallback when primary is already down", async () => {
-  const calls = [];
-
-  const state = healthyState({
-    preferred: "edge",
-    render: {
-      name: "render",
-      healthy: false,
-      status: 503,
-      latency_ms: 20,
-    },
-    northflank: {
-      name: "northflank",
-      healthy: false,
-      status: 503,
-      latency_ms: 20,
-    },
-  });
-
-  const env = baseEnv({
-    state,
-    fetcher: authFetcher(async (input, options) => {
-      const url = String(input);
-      calls.push(url);
-
-      if (
-        url.startsWith(
-          "https://generativelanguage.googleapis.com/v1beta/models/",
-        )
-      ) {
-        assert.equal(
-          options.headers["x-goog-api-key"],
-          "gemini-secret-test",
-        );
-
-        const body = JSON.parse(options.body);
-
-        assert.equal(
-          Array.isArray(body.contents),
-          true,
-        );
-
-        assert.deepEqual(
-          body.tools,
-          [{ google_search: {} }],
-        );
-
-        assert.equal(
-          body.systemInstruction.parts[0].text.includes(
-            "LifeOSAI Synthetic Artificial Intelligence assistant",
-          ),
-          true,
-        );
-
-        assert.equal(
-          body.systemInstruction.parts[0].text.includes(
-            "IGBO UNDERSTANDING POLICY",
-          ),
-          true,
-        );
-
-        assert.equal(
-          body.systemInstruction.parts[0].text.includes(
-            "Igbo Izugbe",
-          ),
-          true,
-        );
-
-        return Response.json({
-          candidates: [
-            {
-              content: {
-                parts: [
-                  {
-                    text: "Worker fallback reply",
-                  },
-                ],
-              },
-              groundingMetadata: {
-                groundingChunks: [
-                  {
-                    web: {
-                      uri: "https://example.com/source",
-                      title: "Example source",
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        });
-      }
-
-      throw new Error(`Unexpected outbound request: ${url}`);
-    }),
-  });
-
-  const makeRequest = () =>
-    authenticated("/api/chat-decision", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key":
-          "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
-      },
-      body: JSON.stringify({
-        messages: [
-          {
-            role: "user",
-            content: "Hello",
-          },
-        ],
-      }),
-    });
-
-  const first = await gateway.fetch(
-    makeRequest(),
-    env,
-  );
-
-  assert.equal(first.status, 200);
-
-  const firstData = await first.json();
-
-  assert.equal(
-    firstData.reply,
-    "Worker fallback reply",
-  );
-
-  assert.equal(
-    firstData.fallback_origin,
-    "cloudflare-worker",
-  );
-
-  assert.equal(
-    firstData.idempotent_replay,
-    false,
-  );
-
-  assert.equal(firstData.grounded, true);
-  assert.equal(firstData.sources.length, 1);
-
-  const second = await gateway.fetch(
-    makeRequest(),
-    env,
-  );
-
-  assert.equal(second.status, 200);
-
-  assert.equal(
-    (await second.json()).idempotent_replay,
-    true,
-  );
-
-  assert.equal(
-    calls.some(item =>
-      item.startsWith(RENDER_ORIGIN)),
-    false,
-  );
-
-  assert.equal(
-    calls.some(item =>
-      item.startsWith(NORTHFLANK_ORIGIN)),
-    false,
-  );
-
-  assert.equal(
-    calls.filter(item =>
-      item.startsWith(
-        "https://generativelanguage.googleapis.com/v1beta/models/",
-      ))
-      .length,
-    1,
-  );
-
-  assert.equal(
-    env.API_RATE_LIMITER.keys.length,
-    1,
-  );
-
-  const cacheWrite = env.ORIGIN_STATE.puts.find(
-    item =>
-      item.key.startsWith("chat-idempotency:"),
-  );
-
-  assert.equal(
-    cacheWrite.options.expirationTtl,
-    60,
-  );
-});
-
-test("an authenticated account read is not blindly replayed", async () => {
-  const calls = [];
-  const env = baseEnv({
-    fetcher: authFetcher(async (input, options) => {
-      const url = String(input);
-      calls.push(url);
-      if (url.startsWith(RENDER_ORIGIN)) return Response.json({ ok: false }, { status: 503 });
-      if (url.startsWith(NORTHFLANK_ORIGIN)) return Response.json({ ok: true, origin: "standby" });
-      throw new Error("unexpected");
-    }),
-  });
-  const response = await gateway.fetch(authenticated("/api/account-profile"), env);
-  assert.equal(response.status, 503);
-  assert.equal((await response.json()).reason, "PRIMARY_UNAVAILABLE");
-  assert.equal(calls.filter(item => item.startsWith(RENDER_ORIGIN)).length, 1);
-  assert.equal(calls.filter(item => item.startsWith(NORTHFLANK_ORIGIN)).length, 0);
-});
-
-test("an incomplete account can load its profile through the primary", async () => {
-  let primaryCalls = 0;
-  const env = baseEnv({
-    fetcher: authFetcher(async input => {
-      assert.equal(String(input), `${RENDER_ORIGIN}/api/account-profile`);
-      primaryCalls += 1;
-      return Response.json({ ok: true, complete: false, profile: {} });
-    }, profile({ first_name: "" })),
-  });
-  const response = await gateway.fetch(authenticated("/api/account-profile"), env);
-  assert.equal(response.status, 200);
-  assert.equal((await response.json()).complete, false);
-  assert.equal(primaryCalls, 1);
-});
-
-test("an account-profile mutation is unavailable instead of spilling to standby", async () => {
-  const calls = [];
-  const state = healthyState({
-    preferred: "northflank",
-    render: { name: "render", healthy: false, status: 503, latency_ms: 20 },
-    northflank: { name: "northflank", healthy: true, status: 200, latency_ms: 12 },
-  });
-  const env = baseEnv({
-    state,
-    fetcher: authFetcher(async input => {
-      calls.push(String(input));
-      return Response.json({ ok: true });
-    }, profile({ first_name: "" })),
-  });
-  const response = await gateway.fetch(authenticated("/api/account-profile", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Idempotency-Key": "cccccccc-dddd-4eee-8fff-aaaaaaaaaaaa",
-    },
-    body: JSON.stringify({ first_name: "LifeOS" }),
-  }), env);
-  assert.equal(response.status, 503);
-  assert.equal((await response.json()).reason, "NO_COMPATIBLE_ORIGIN");
-  assert.equal(calls.some(item => item.startsWith(RENDER_ORIGIN)), false);
-  assert.equal(calls.some(item => item.startsWith(NORTHFLANK_ORIGIN)), false);
-});
-
-test("five-minute health evaluation stores preferred origin and alerts on change", async () => {
-  const previous = healthyState({
-    preferred: "render",
-    render: { name: "render", healthy: true, status: 200, latency_ms: 5 },
-  });
-  let alertCalls = 0;
-  const env = baseEnv({
-    state: previous,
-    fetcher: async input => {
-      const url = String(input);
-      if (url === `${RENDER_ORIGIN}/health`) return new Response("down", { status: 503 });
-      if (url === `${NORTHFLANK_ORIGIN}/health`) return new Response("OK", { status: 200 });
-      if (url === "https://alerts.example.com/lifeos") {
-        alertCalls += 1;
-        return new Response(null, { status: 204 });
-      }
-      throw new Error(`Unexpected ${url}`);
-    },
-  });
-  let task;
-  await gateway.scheduled({}, env, { waitUntil(value) { task = value; } });
-  await task;
-  const stored = await env.ORIGIN_STATE.get(ORIGIN_STATE_KEY, { type: "json" });
-  assert.equal(stored.preferred, "northflank");
-  assert.equal(stored.render.healthy, false);
-  assert.equal(stored.northflank.healthy, true);
-  assert.equal(stored.alert_sent, true);
-  assert.equal(alertCalls, 1);
-  assert.equal(
-    env.ORIGIN_STATE.puts.filter(item => item.key === ORIGIN_STATE_KEY).length,
-    1,
-  );
-});
-
-test("missing Northflank configuration falls back to edge without probing standby", async () => {
-  const calls = [];
-  const state = healthyState({ preferred: "edge" });
-  const env = baseEnv({
-    state,
-    fetcher: async input => {
-      const url = String(input);
-      calls.push(url);
-      if (url === `${RENDER_ORIGIN}/health`) {
-        return new Response("down", { status: 503 });
-      }
-      throw new Error(`Unexpected ${url}`);
-    },
-  });
-  delete env.NORTHFLANK_ORIGIN;
-
-  let task;
-  await gateway.scheduled({}, env, {
-    waitUntil(value) { task = value; },
-  });
-  await task;
-
-  const stored = await env.ORIGIN_STATE.get(ORIGIN_STATE_KEY, { type: "json" });
-  assert.equal(stored.preferred, "edge");
-  assert.equal(stored.render.healthy, false);
-  assert.equal(stored.northflank.configured, false);
-  assert.equal(stored.northflank.healthy, false);
-  assert.deepEqual(calls, [`${RENDER_ORIGIN}/health`]);
-});
-
-test("both Python origins can fail while the edge health and public site contract stay online", async () => {
-  const state = healthyState({
-    preferred: "edge",
-    render: { name: "render", healthy: false, status: 0, latency_ms: 8000 },
-    northflank: { name: "northflank", healthy: false, status: 0, latency_ms: 8000 },
-  });
-  const env = baseEnv({ state });
-  const response = await gateway.fetch(request("/health"), env);
-  assert.equal(response.status, 200);
-  const data = await response.json();
-  assert.equal(data.preferred_origin, "edge");
-  assert.equal(data.public_site_available_independently, true);
-  assert.equal(data.supabase_is_system_of_record, true);
-  assert.equal(data.voice_token_gateway_available, true);
 });
 
 test("capacity contract handles fifty concurrent public configuration requests", async () => {
