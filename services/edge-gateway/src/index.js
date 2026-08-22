@@ -1,6 +1,5 @@
 import {
   GatewayError,
-  PUBLIC_COMPATIBILITY_GET_PATHS,
   errorResponse,
   jsonResponse,
   requestOriginAllowed,
@@ -91,10 +90,6 @@ async function handleRequest(request, env) {
         idempotencyKey,
       ),
     );
-  }
-
-  if (request.method === "GET" && PUBLIC_COMPATIBILITY_GET_PATHS.has(pathname)) {
-    throw new GatewayError(404, "NOT_FOUND", "Not found.");
   }
 
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/audio/")) {
