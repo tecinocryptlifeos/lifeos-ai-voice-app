@@ -24,6 +24,7 @@ class FakeElement {
     this.listeners.set(type, listener);
   }
 
+  setAttribute() {}
   pause() {}
   async play() {}
 }
