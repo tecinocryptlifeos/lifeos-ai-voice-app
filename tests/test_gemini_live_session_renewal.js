@@ -156,6 +156,13 @@ global.window = global;
 window.isSecureContext = true;
 window.AudioContext = FakeAudioContext;
 window.addEventListener = () => {};
+window.dispatchEvent = () => true;
+window.CustomEvent = class CustomEvent {
+  constructor(type, init = {}) {
+    this.type = type;
+    this.detail = init.detail;
+  }
+};
 window.LifeOSGoldenVisualizer = {
   attachSophiaNode() {},
   attachMicrophoneNode() {},
