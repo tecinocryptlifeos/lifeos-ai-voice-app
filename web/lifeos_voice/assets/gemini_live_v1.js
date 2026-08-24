@@ -38,6 +38,41 @@ const orb=document.getElementById("orb");
 const audioElement=document.getElementById("sophiaAudio");
 
 /* LOSAI_EXACT_VOICE_PHASE_BRIDGE_V1 */
+
+function appendSearchAttribution(content){
+  const grounding = content?.groundingMetadata;
+  if(!grounding) return "";
+
+  const chunks = [];
+  const chunksList = Array.isArray(grounding.groundingChunks)
+    ? grounding.groundingChunks
+    : [];
+
+  for(const chunk of chunksList){
+    const web = chunk?.web;
+    const title = String(web?.title || "").trim();
+    const uri = String(web?.uri || "").trim();
+    if(title || uri){
+      chunks.push(title && uri ? `${title} — ${uri}` : (title || uri));
+    }
+  }
+
+  const supports = Array.isArray(grounding.groundingSupports)
+    ? grounding.groundingSupports
+    : [];
+
+  for(const support of supports){
+    const segment = String(
+      support?.segment?.text ||
+      support?.text ||
+      ""
+    ).trim();
+    if(segment) chunks.push(segment);
+  }
+
+  return chunks.join(" | ");
+}
+
 function signalLifeOSVoicePhase(phase){
   window.dispatchEvent(new CustomEvent("lifeos-voice-phase",{
     detail:{phase:String(phase||"idle")}
@@ -584,6 +619,14 @@ async function handleMessage(event,sourceSocket,resuming){
   if(content.interrupted)clearOutput();
 
   const parts=content.modelTurn&&Array.isArray(content.modelTurn.parts)?content.modelTurn.parts:[];
+
+      const searchAttribution = appendSearchAttribution(content.groundingMetadata);
+      const searchAttributionElement = document.getElementById("searchAttribution");
+      if(searchAttributionElement){
+        searchAttributionElement.textContent = searchAttribution
+          ? `Web sources: ${searchAttribution}`
+          : "";
+      }
   for(const part of parts){
     const inline=part.inlineData||part.inline_data;
     const mimeType=inline&&(inline.mimeType||inline.mime_type||"");
