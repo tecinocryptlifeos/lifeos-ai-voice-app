@@ -16,7 +16,6 @@ REQUIRED = (
     "LIFEOS_ALLOWED_ORIGINS",
     "LIFEOS_PUBLIC_SITE_ORIGIN",
     "LIFEOS_API_ORIGIN",
-    "RENDER_ORIGIN",
     "SUPABASE_URL",
     "SUPABASE_PUBLISHABLE_KEY",
     "ORIGIN_STATE_KV_ID",
@@ -49,7 +48,7 @@ def main() -> None:
         raise SystemExit("Missing required public configuration: " + ", ".join(missing))
 
     for name in (
-        "LIFEOS_PUBLIC_SITE_ORIGIN", "LIFEOS_API_ORIGIN", "RENDER_ORIGIN",
+        "LIFEOS_PUBLIC_SITE_ORIGIN", "LIFEOS_API_ORIGIN",
         "SUPABASE_URL",
     ):
         values[name] = origin(values[name], name)
