@@ -41,9 +41,9 @@ jobs:
           npm --prefix services/edge-gateway run check
       - name: Validate the rendered Worker bindings
         env:
-          LIFEOS_ALLOWED_ORIGINS: https://preview.pages.dev,https://losai.ng.eu.org
-          LIFEOS_PUBLIC_SITE_ORIGIN: https://losai.ng.eu.org
-          LIFEOS_API_ORIGIN: https://api.losai.ng.eu.org
+          LIFEOS_ALLOWED_ORIGINS: https://lifeosai.pages.dev
+          LIFEOS_PUBLIC_SITE_ORIGIN: https://lifeosai.pages.dev
+          LIFEOS_API_ORIGIN: https://losai-edge-gateway.lifeostecinoai.workers.dev
           SUPABASE_URL: https://example.supabase.co
           SUPABASE_PUBLISHABLE_KEY: sb_publishable_example
           ORIGIN_STATE_KV_ID: "11111111111111111111111111111111"
@@ -55,9 +55,9 @@ jobs:
           services/edge-gateway/node_modules/.bin/wrangler types /tmp/losai-worker-env.d.ts --config infrastructure/cloudflare/wrangler.toml
       - name: Build and inspect the Cloudflare Pages artifact
         env:
-          LIFEOS_PAGES_PREVIEW: "true"
-          LIFEOS_PUBLIC_SITE_ORIGIN: https://losai.ng.eu.org
-          LIFEOS_API_ORIGIN: https://api.losai.ng.eu.org
+          LIFEOS_PAGES_PREVIEW: "false"
+          LIFEOS_PUBLIC_SITE_ORIGIN: https://lifeosai.pages.dev
+          LIFEOS_API_ORIGIN: https://losai-edge-gateway.lifeostecinoai.workers.dev
         run: python apps/web/build.py
       - name: Compile deployable Python entry points
         run: python -m compileall -q app services/failover-python apps/web infrastructure/cloudflare operations
