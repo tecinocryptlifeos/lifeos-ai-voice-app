@@ -32,4 +32,6 @@ The production build targets the Cloudflare Pages origin and the same
 The Pages-production Android build is the authoritative APK pipeline; the
 legacy emulator-install workflow is not the production build path.
 
+CI trigger isolation: only the Pages production v3 workflow builds release APK/AAB artifacts.
+
 No signing key or generated application package may be committed to Git.
