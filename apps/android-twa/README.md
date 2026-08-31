@@ -29,4 +29,7 @@ artifacts are uploaded only as workflow artifacts.
 The production build targets the Cloudflare Pages origin and the same
 `/chat?source=android-twa` route used by the current web application.
 
+The Pages-production Android build is the authoritative APK pipeline; the
+legacy emulator-install workflow is not the production build path.
+
 No signing key or generated application package may be committed to Git.
