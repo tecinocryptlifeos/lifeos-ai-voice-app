@@ -99,6 +99,19 @@ function profileComplete(profile, minimumAge) {
     Boolean(profile.age_verified_at) && profile.dob_retention === "eligibility_only";
 }
 
+function calculateAge(dateOfBirth) {
+  const value = String(dateOfBirth || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return -1;
+  const birth = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(birth.getTime()) || birth.toISOString().slice(0, 10) !== value) return -1;
+  const today = new Date();
+  let age = today.getUTCFullYear() - birth.getUTCFullYear();
+  const beforeBirthday = today.getUTCMonth() < birth.getUTCMonth() ||
+    (today.getUTCMonth() === birth.getUTCMonth() && today.getUTCDate() < birth.getUTCDate());
+  if (beforeBirthday) age -= 1;
+  return age;
+}
+
 export function publicConfig(env) {
   const emailEnabled = enabled(env.LIFEOS_EMAIL_AUTH_ENABLED);
   const key = publicKey(env);
@@ -137,6 +150,59 @@ export async function loadProfile(env, token, userId) {
   }
   const profile = data[0] || null;
   const minimumAge = integerSetting(env.LIFEOS_MINIMUM_AGE, 13, 13, 18);
+  return { profile, complete: profileComplete(profile, minimumAge), minimum_age: minimumAge };
+}
+
+export async function updateProfile(env, token, userId, payload) {
+  const { url, key } = requireSupabase(env);
+  const input = payload && typeof payload === "object" ? payload : {};
+  const firstName = String(input.first_name || "").trim();
+  const surname = String(input.surname || "").trim();
+  const dateOfBirth = String(input.date_of_birth || "").trim();
+  const country = String(input.country || "").trim();
+  const phone = String(input.phone || "").trim();
+  const acceptTerms = input.accept_terms === true;
+  const minimumAge = integerSetting(env.LIFEOS_MINIMUM_AGE, 13, 13, 18);
+
+  if (!firstName) throw new GatewayError(400, "PROFILE_FIRST_NAME_REQUIRED", "First name is required.");
+  if (!surname) throw new GatewayError(400, "PROFILE_SURNAME_REQUIRED", "Surname is required.");
+  if (!country) throw new GatewayError(400, "PROFILE_COUNTRY_REQUIRED", "Country is required.");
+  const age = calculateAge(dateOfBirth);
+  if (age < minimumAge) {
+    throw new GatewayError(400, "PROFILE_MINIMUM_AGE", `You must be at least ${minimumAge} years old.`);
+  }
+  if (!acceptTerms) {
+    throw new GatewayError(400, "PROFILE_TERMS_REQUIRED", "Accept the Terms and Privacy Policy to continue.");
+  }
+
+  const profilePayload = {
+    user_id: userId,
+    first_name: firstName,
+    surname,
+    display_name: `${firstName} ${surname}`,
+    date_of_birth: dateOfBirth,
+    country,
+    phone: phone || null,
+    terms_accepted_at: new Date().toISOString(),
+  };
+
+  const headers = {
+    apikey: key,
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+    Prefer: "resolution=merge-duplicates,return=representation",
+  };
+
+  const { response, data } = await fetchJson(
+    env,
+    `${url}/rest/v1/lifeos_profiles?on_conflict=user_id`,
+    { method: "POST", headers, body: JSON.stringify(profilePayload) },
+  );
+  if (!response.ok || !Array.isArray(data) || !data[0]) {
+    throw new GatewayError(503, "PROFILE_UPDATE_FAILED", "The LifeOS account profile could not be saved.");
+  }
+
+  const profile = data[0];
   return { profile, complete: profileComplete(profile, minimumAge), minimum_age: minimumAge };
 }
 
