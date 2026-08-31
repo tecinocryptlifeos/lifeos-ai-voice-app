@@ -21,8 +21,8 @@
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://lifeosai.pages.dev/manifest.webmanifest",
   "fallbackType": "customtabs",
-  "appVersion": "1.0.1",
-  "appVersionCode": 2,
+  "appVersion": "1.0.2",
+  "appVersionCode": 3,
   "minSdkVersion": 23,
   "signingKey": {
     "path": "./signing-key.jks",
