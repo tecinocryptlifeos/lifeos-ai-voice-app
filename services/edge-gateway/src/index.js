@@ -132,7 +132,7 @@ async function handleRequest(request, env) {
     return jsonResponse(request, env, 200, publicConfig(env));
   }
   if (request.method === "GET" && pathname === "/api/gemini-live-status") {
-    return jsonResponse(request, env, 200, geminiStatus(env));
+    return jsonResponse(request, env, geminiStatus(env));
   }
   if (request.method === "GET" && ["/api/session", "/api/session-status"].includes(pathname)) {
     const session = await verifySession(request, env, { profile: "optional" });
@@ -145,35 +145,6 @@ async function handleRequest(request, env) {
   if (request.method === "POST" && pathname === "/api/gemini-live-token") {
     const idempotencyKey = requireIdempotencyKey(request);
     const session = await verifySession(request, env, { profile: "required" });
-    const state = await currentOriginState(env);
-
-    /*
-     * Render is the primary Gemini Live token authority.
-     * The Cloudflare Worker remains the public API gateway.
-     * Native edge token issuance is retained only as a controlled fallback
-     * when the primary Render origin is unavailable.
-     */
-    if (state.render?.healthy) {
-      const renderRequest = request.clone();
-      try {
-        const renderResponse = await proxyOnce(
-          renderRequest,
-          env,
-          originUrls(env).render,
-        );
-
-        if (renderResponse.status < 500) {
-          return renderResponse;
-        }
-
-        if (renderResponse.body?.cancel) {
-          await renderResponse.body.cancel().catch(() => {});
-        }
-      } catch (error) {
-        // Continue into the native edge fallback below.
-      }
-    }
-
     return jsonResponse(
       request,
       env,
