@@ -1,9 +1,10 @@
-import { GatewayError } from "./policy.js";
+import { GatewayError, stableHash } from "./policy.js";
 
 const MAX_BODY_BYTES = 60000;
 const MAX_MESSAGES = 12;
 const MAX_USER_CHARS = 1400;
 const MAX_ASSISTANT_CHARS = 1000;
+const IDEMPOTENCY_TTL_SECONDS = 60;
 
 export const SOPHIA_DECISION_SYSTEM_INSTRUCTION = `
 You are Sophia, the LifeOSAI Synthetic Artificial Intelligence decision-intelligence system.
@@ -187,7 +188,8 @@ async function callGemini(env, contents, { search = true, maxOutputTokens = 1200
         const payload = await response.json().catch(() => ({}));
         const text = response.ok ? extractText(payload) : "";
         if (response.ok && text) {
-          return { text, sources: extractSources(payload), model, grounded: extractSources(payload).length > 0 };
+          const sources = extractSources(payload);
+          return { text, sources, model, grounded: sources.length > 0 };
         }
         lastFailure = `${model} returned HTTP ${response.status}`;
         if (useSearch && [400, 403, 429].includes(response.status)) continue;
@@ -218,6 +220,11 @@ export async function issueDecisionIntelligence(request, env, session, idempoten
   if (!userId) throw new GatewayError(401, "AUTH_REQUIRED", "Sign-in is required.");
   if (!idempotencyKey) throw new GatewayError(400, "IDEMPOTENCY_KEY_REQUIRED", "A valid Idempotency-Key is required.");
 
+  const idempotencyMaterial = `${userId}:${idempotencyKey}`;
+  const cacheKey = `decision-idempotency:${await stableHash(idempotencyMaterial)}`;
+  const cached = await env.ORIGIN_STATE?.get(cacheKey, { type: "json" });
+  if (cached?.ok && cached?.reply) return { ...cached, idempotent_replay: true };
+
   const contentLength = Number.parseInt(request.headers.get("Content-Length") || "0", 10);
   if (Number.isFinite(contentLength) && (contentLength < 0 || contentLength > MAX_BODY_BYTES)) {
     throw new GatewayError(413, "CHAT_REQUEST_TOO_LARGE", "The decision request body is too large.");
@@ -236,7 +243,7 @@ export async function issueDecisionIntelligence(request, env, session, idempoten
   const messages = compactMessages(payload);
   const generated = await callGemini(env, decisionPrompt(messages), { search: true, maxOutputTokens: 1200 });
 
-  return {
+  const result = {
     ok: true,
     reply: generated.text,
     audit: generated.text,
@@ -249,4 +256,9 @@ export async function issueDecisionIntelligence(request, env, session, idempoten
     fallback_origin: "cloudflare-worker",
     idempotent_replay: false,
   };
+
+  if (env.ORIGIN_STATE?.put) {
+    await env.ORIGIN_STATE.put(cacheKey, JSON.stringify(result), { expirationTtl: IDEMPOTENCY_TTL_SECONDS });
+  }
+  return result;
 }
