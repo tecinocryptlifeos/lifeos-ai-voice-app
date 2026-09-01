@@ -1,8 +1,8 @@
 export const ORIGIN_STATE_KEY = "origin-health-v1";
 export const ORIGIN_STATE_MAX_AGE_MS = 6 * 60 * 1000;
 
-// Cloudflare is the production edge. The Worker must not discover, probe,
-// select, or fail over to an external Render/Northflank origin.
+// Cloudflare is the production edge. The Worker is edge-only and has no
+// external-origin discovery, probing, selection, or failover path.
 export function edgeOriginState() {
   return {
     checked_at: new Date().toISOString(),
@@ -23,8 +23,8 @@ export async function evaluateOrigins(env) {
 }
 
 export async function currentOriginState(env) {
-  // A stale/missing KV health record must never trigger an external-origin
-  // lookup. KV remains available for unrelated idempotency storage elsewhere.
+  // A stale/missing KV health record must never trigger external-origin
+  // discovery. KV remains available for unrelated idempotency storage.
   if (env.ORIGIN_STATE?.get) {
     const state = await env.ORIGIN_STATE.get(ORIGIN_STATE_KEY, { type: "json" });
     if (
