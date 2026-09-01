@@ -62,39 +62,21 @@ export function geminiStatus(env) {
   };
 }
 
-export async function issueGeminiToken(request, env, session, idempotencyKey) {
-  const apiKey = String(env.GEMINI_API_KEY || "").trim();
-  if (!apiKey) {
-    throw new GatewayError(503, "GEMINI_NOT_CONFIGURED", "Gemini Live is not configured.");
-  }
-  const payload = await requestPayload(request);
-  const policy = modelPolicy(env, payload.model_preference);
-  const cacheKey = `token-idempotency:${await stableHash(`${session.user.id}:${idempotencyKey}`)}`;
-  const cached = await env.ORIGIN_STATE?.get(cacheKey, { type: "json" });
-  if (cached?.ok && cached?.token) return { ...cached, idempotent_replay: true };
-
-  if (!env.API_RATE_LIMITER?.limit) {
-    throw new GatewayError(503, "RATE_LIMITER_MISSING", "The LifeOS API rate limiter is not configured.");
-  }
-  const limited = await env.API_RATE_LIMITER.limit({ key: `${session.user.id}:${policy.preference}:gemini-live-token` });
-  if (!limited?.success) {
-    throw new GatewayError(429, "RATE_LIMITED", "Please wait before starting another Gemini Live session.", { retry_after: 60 });
-  }
-
+async function createGeminiToken(fetchFunction, apiKey, model) {
   const now = Date.now();
   const tokenRequest = {
     uses: 1,
     expireTime: new Date(now + 30 * 60 * 1000).toISOString(),
     newSessionExpireTime: new Date(now + 60 * 1000).toISOString(),
     liveConnectConstraints: {
-      model: `models/${policy.model}`,
+      model: `models/${model}`,
       config: {
         sessionResumption: {},
         responseModalities: ["AUDIO"],
       },
     },
   };
-  const response = await fetchImpl(env)(
+  const response = await fetchFunction(
     "https://generativelanguage.googleapis.com/v1beta/auth_tokens",
     {
       method: "POST",
@@ -108,16 +90,67 @@ export async function issueGeminiToken(request, env, session, idempotencyKey) {
   );
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !String(data.name || "").trim()) {
-    throw new GatewayError(502, "GEMINI_TOKEN_FAILED", "Gemini Live token issuance failed.");
+    return { ok: false, status: response.status, data };
   }
+  return { ok: true, token: String(data.name).trim() };
+}
+
+export async function issueGeminiToken(request, env, session, idempotencyKey) {
+  const apiKey = String(env.GEMINI_API_KEY || "").trim();
+  if (!apiKey) {
+    throw new GatewayError(503, "GEMINI_NOT_CONFIGURED", "Gemini Live is not configured.");
+  }
+  const payload = await requestPayload(request);
+  const policy = modelPolicy(env, payload.model_preference);
+  const cacheKey = `token-idempotency:${await stableHash(`${session.user.id}:${idempotencyKey}:${policy.preference}`)}`;
+  const cached = await env.ORIGIN_STATE?.get(cacheKey, { type: "json" });
+  if (cached?.ok && cached?.token) return { ...cached, idempotent_replay: true };
+
+  if (!env.API_RATE_LIMITER?.limit) {
+    throw new GatewayError(503, "RATE_LIMITER_MISSING", "The LifeOS API rate limiter is not configured.");
+  }
+  const limited = await env.API_RATE_LIMITER.limit({ key: `${session.user.id}:${policy.preference}:gemini-live-token` });
+  if (!limited?.success) {
+    throw new GatewayError(429, "RATE_LIMITED", "Please wait before starting another Gemini Live session.", { retry_after: 60 });
+  }
+
+  const fetchFunction = fetchImpl(env);
+  let selectedModel = policy.model;
+  let selectedPreference = policy.preference;
+  let issued = await createGeminiToken(fetchFunction, apiKey, selectedModel);
+
+  if (
+    !issued.ok &&
+    policy.preference === "primary" &&
+    policy.fallback &&
+    policy.fallback !== policy.primary
+  ) {
+    const fallbackIssued = await createGeminiToken(fetchFunction, apiKey, policy.fallback);
+    if (fallbackIssued.ok) {
+      issued = fallbackIssued;
+      selectedModel = policy.fallback;
+      selectedPreference = "fallback";
+    }
+  }
+
+  if (!issued.ok || !issued.token) {
+    throw new GatewayError(
+      502,
+      "GEMINI_TOKEN_FAILED",
+      "Gemini Live token issuance failed.",
+      { provider_status: Number(issued.status) || 0, requested_model: policy.model },
+    );
+  }
+
   const result = {
     ok: true,
-    token: String(data.name).trim(),
-    model: policy.model,
-    model_preference: policy.preference,
+    token: issued.token,
+    model: selectedModel,
+    model_preference: selectedPreference,
     primary_model: policy.primary,
     fallback_model: policy.fallback || null,
     fallback_available: Boolean(policy.fallback && policy.fallback !== policy.primary),
+    fallback_used: selectedPreference === "fallback" && policy.preference === "primary",
     thinking_level: "medium",
     websocket_url: GEMINI_WEBSOCKET_URL,
     gateway_version: "edge-v1",

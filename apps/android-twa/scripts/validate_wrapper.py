@@ -9,7 +9,7 @@ from urllib.parse import urlsplit
 
 EXPECTED_PACKAGE_ID = "losia.htc.com"
 EXPECTED_HOST = "lifeosai.pages.dev"
-EXPECTED_START_URL = "/chat?source=android-twa"
+EXPECTED_START_URL = "/"
 
 
 def fail(message: str) -> None:
