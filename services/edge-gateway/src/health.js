@@ -1,5 +1,3 @@
-import { GatewayError } from "./policy.js";
-
 export const ORIGIN_STATE_KEY = "origin-health-v1";
 export const ORIGIN_STATE_MAX_AGE_MS = 6 * 60 * 1000;
 
