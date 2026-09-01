@@ -78,11 +78,12 @@ jobs:
           manifest = json.loads(Path("twa-manifest.json").read_text(encoding="utf-8"))
           assetlinks = json.loads(Path("../../web/lifeos_voice/.well-known/assetlinks.json").read_text(encoding="utf-8"))
           assert manifest["host"] == "lifeosai.pages.dev"
-          assert manifest["startUrl"] == "/chat?source=android-twa"
+          assert manifest["startUrl"] == "/"
           assert manifest["webManifestUrl"] == "https://lifeosai.pages.dev/manifest.webmanifest"
           assert assetlinks[0]["target"]["package_name"] == manifest["packageId"]
           assert len(assetlinks[0]["target"]["sha256_cert_fingerprints"]) == 1
           print("PAGES_PRODUCTION_CONTRACT=PASS")
+          print("ANDROID_HOME_START_ROUTE=PASS")
           print("RENDER_ORIGIN_NOT_USED_BY_TWA=PASS")
           PY
 
@@ -148,7 +149,7 @@ jobs:
           manifest = json.loads(source.read_text(encoding="utf-8"))
           if manifest["host"] != "lifeosai.pages.dev":
               raise SystemExit("Unexpected trusted host")
-          if manifest["startUrl"] != "/chat?source=android-twa":
+          if manifest["startUrl"] != "/":
               raise SystemExit("Unexpected start URL")
           local = "http://127.0.0.1:8765"
           manifest["iconUrl"] = local + "/icons/lifeos-icon-512.png"
@@ -196,7 +197,7 @@ jobs:
           path.write_text(text.replace(local, production, 1), encoding="utf-8")
           PY
           grep -Fq "hostName: 'lifeosai.pages.dev'" app/build.gradle
-          grep -Fq "launchUrl: '/chat?source=android-twa'" app/build.gradle
+          grep -Fq "launchUrl: '/'" app/build.gradle
           grep -Fq "https://lifeosai.pages.dev/manifest.webmanifest" app/build.gradle
           echo "GENERATED_PAGES_TWA=PASS"
 
