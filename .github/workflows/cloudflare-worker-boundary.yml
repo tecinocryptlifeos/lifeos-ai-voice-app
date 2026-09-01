@@ -1,0 +1,38 @@
+name: Cloudflare Worker boundary
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out release
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: services/edge-gateway/package-lock.json
+      - name: Install pinned edge toolchain
+        run: npm ci --ignore-scripts --prefix services/edge-gateway
+      - name: Verify Worker source has no external provider origin path
+        run: |
+          if grep -RInE 'RENDER_ORIGIN|NORTHFLANK_ORIGIN|losai\.onrender\.com|onrender\.com' services/edge-gateway infrastructure/cloudflare/wrangler.toml.template infrastructure/cloudflare/render_config.py; then
+            echo "CLOUDFLARE_WORKER_EXTERNAL_ORIGIN=FAIL"
+            exit 1
+          fi
+          echo "CLOUDFLARE_WORKER_EXTERNAL_ORIGIN=PASS"
+      - name: Run edge gateway tests
+        run: npm --prefix services/edge-gateway test
+      - name: Check edge gateway syntax
+        run: npm --prefix services/edge-gateway run check
