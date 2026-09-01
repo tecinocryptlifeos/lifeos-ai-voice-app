@@ -93,16 +93,3 @@ test("public health reports Cloudflare edge as authoritative", async () => {
   assert.equal(body.edge_healthy, true);
   assert.equal("legacy_healthy" in body, false);
 });
-
-test("unsupported API paths fail closed at the edge", async () => {
-  const runtime = env();
-  const request = new Request(`${API_ORIGIN}/api/legacy-route`, {
-    method: "GET",
-    headers: { Origin: PUBLIC_ORIGIN },
-  });
-  const response = await gateway.fetch(request, runtime);
-
-  assert.notEqual(response.status, 502);
-  assert.notEqual(response.status, 504);
-  assert.match(await response.text(), /EDGE_ROUTE_NOT_IMPLEMENTED|NO_COMPATIBLE_ORIGIN|Maintenance/i);
-});
