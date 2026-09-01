@@ -9,7 +9,7 @@ import {
   responseHeaders,
 } from "./policy.js";
 import { geminiStatus, issueGeminiToken } from "./gemini.js";
-import { issueChatDecision } from "./chat.js";
+import { issueDecisionIntelligence } from "./decision-engine.js";
 import { currentOriginState } from "./health.js";
 import { publicConfig, updateProfile, verifySession } from "./supabase.js";
 
@@ -75,7 +75,7 @@ async function handleRequest(request, env) {
       request,
       env,
       200,
-      await issueChatDecision(request, env, session, idempotencyKey),
+      await issueDecisionIntelligence(request, env, session, idempotencyKey),
     );
   }
 
