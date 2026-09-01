@@ -46,24 +46,22 @@ test("health evaluation is Cloudflare-edge-only", async () => {
 
   assert.equal(state.preferred, "edge");
   assert.equal(state.edge.healthy, true);
-  assert.equal("render" in state, false);
-  assert.equal("northflank" in state, false);
+  assert.equal("legacy" in state, false);
   assert.equal(runtime.__KV.puts.length, 1);
 });
 
-test("stale KV health never causes external-origin discovery", async () => {
+test("stale KV health never restores a legacy provider", async () => {
   const stale = {
     checked_at: "2020-01-01T00:00:00.000Z",
     checked_at_ms: 1,
-    preferred: "render",
-    render: { name: "render", healthy: true, status: 200, latency_ms: 1 },
+    preferred: "legacy",
+    legacy: { name: "legacy", healthy: true, status: 200, latency_ms: 1 },
   };
   const runtime = env(stale);
   const state = await currentOriginState(runtime);
 
   assert.equal(state.preferred, "edge");
-  assert.equal("render" in state, false);
-  assert.equal("northflank" in state, false);
+  assert.equal("legacy" in state, false);
 });
 
 test("fresh edge state remains edge-only", async () => {
@@ -77,7 +75,7 @@ test("fresh edge state remains edge-only", async () => {
 
   assert.equal(state.preferred, "edge");
   assert.equal(state.edge.healthy, true);
-  assert.equal("render" in state, false);
+  assert.equal("legacy" in state, false);
 });
 
 test("public health reports Cloudflare edge as authoritative", async () => {
@@ -93,11 +91,10 @@ test("public health reports Cloudflare edge as authoritative", async () => {
   assert.equal(body.ok, true);
   assert.equal(body.preferred_origin, "edge");
   assert.equal(body.edge_healthy, true);
-  assert.equal("render_healthy" in body, false);
-  assert.equal("northflank_healthy" in body, false);
+  assert.equal("legacy_healthy" in body, false);
 });
 
-test("unsupported API paths fail closed without an external origin", async () => {
+test("unsupported API paths fail closed at the edge", async () => {
   const runtime = env();
   const request = new Request(`${API_ORIGIN}/api/legacy-route`, {
     method: "GET",
