@@ -2,7 +2,6 @@ import {
   GatewayError,
   PUBLIC_COMPATIBILITY_GET_PATHS,
   errorResponse,
-  isMutation,
   jsonResponse,
   maintenanceResponse,
   requestOriginAllowed,
@@ -69,8 +68,6 @@ async function handleRequest(request, env) {
     return jsonResponse(request, env, 200, await issueGeminiToken(request, env, session, idempotencyKey));
   }
 
-  // Cloudflare edge is authoritative. Chat no longer depends on an external
-  // Render/Northflank compatibility origin.
   if (request.method === "POST" && pathname === "/api/chat-decision") {
     const idempotencyKey = requireIdempotencyKey(request);
     const session = await verifySession(request, env, { profile: "required" });
@@ -95,8 +92,7 @@ async function handleRequest(request, env) {
     return jsonResponse(request, env, 200, profile);
   }
 
-  // There is deliberately no external-origin proxy in the production Worker.
-  // Unsupported compatibility paths fail closed instead of attempting Render.
+  // Unsupported legacy routes fail closed at the Cloudflare edge.
   if (!pathname.startsWith("/api/") && !pathname.startsWith("/audio/")) {
     throw new GatewayError(404, "NOT_FOUND", "Not found.");
   }
