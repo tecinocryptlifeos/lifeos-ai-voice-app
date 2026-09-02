@@ -43,6 +43,15 @@ class SplitPlatformStructureTests(unittest.TestCase):
         self.assertIn("autoDeployTrigger: off", render)
         self.assertIn("LIFEOS_GATEWAY_REQUIRED", render)
 
+    def test_worker_api_origin_is_not_the_public_pages_origin(self):
+        build = (ROOT / "apps/web/build.py").read_text(encoding="utf-8")
+        self.assertIn('FINAL_SITE_ORIGIN = "https://lifeosai.pages.dev"', build)
+        self.assertIn('FINAL_API_ORIGIN = "https://losai-edge-gateway.lifeostecinoai.workers.dev"', build)
+        self.assertNotEqual(
+            'FINAL_SITE_ORIGIN = "https://lifeosai.pages.dev"',
+            'FINAL_API_ORIGIN = "https://lifeosai.pages.dev"',
+        )
+
     def test_account_and_api_are_disallowed_from_public_indexing(self):
         robots = (ROOT / "web/lifeos_voice/robots.txt").read_text(encoding="utf-8")
         self.assertIn("Disallow: /account", robots)
