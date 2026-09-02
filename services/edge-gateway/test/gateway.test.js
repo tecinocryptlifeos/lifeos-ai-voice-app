@@ -5,6 +5,8 @@ import gateway from "../src/index.js";
 import { ORIGIN_STATE_KEY, currentOriginState, evaluateOrigins } from "../src/health.js";
 
 const PUBLIC_ORIGIN = "https://lifeosai.pages.dev";
+const PREVIEW_ORIGIN = "https://05.lifeosai.pages.dev";
+const UNTRUSTED_ORIGIN = "https://example.com";
 const API_ORIGIN = "https://losai-edge-gateway.lifeostecinoai.workers.dev";
 
 class MemoryKV {
@@ -92,4 +94,38 @@ test("public health reports Cloudflare edge as authoritative", async () => {
   assert.equal(body.preferred_origin, "edge");
   assert.equal(body.edge_healthy, true);
   assert.equal("legacy_healthy" in body, false);
+});
+
+test("trusted Cloudflare Pages preview origin is accepted", async () => {
+  const runtime = env();
+  const request = new Request(`${API_ORIGIN}/api/auth-config`, {
+    method: "GET",
+    headers: { Origin: PREVIEW_ORIGIN },
+  });
+  const response = await gateway.fetch(request, runtime);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), PREVIEW_ORIGIN);
+});
+
+test("untrusted origin is still rejected", async () => {
+  const runtime = env();
+  const request = new Request(`${API_ORIGIN}/api/auth-config`, {
+    method: "GET",
+    headers: { Origin: UNTRUSTED_ORIGIN },
+  });
+  const response = await gateway.fetch(request, runtime);
+  const body = await response.json();
+  assert.equal(response.status, 403);
+  assert.equal(body.code, "ORIGIN_NOT_ALLOWED");
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), null);
+});
+
+test("lookalike subdomain outside the Pages suffix is rejected", async () => {
+  const runtime = env();
+  const request = new Request(`${API_ORIGIN}/api/auth-config`, {
+    method: "GET",
+    headers: { Origin: "https://05.lifeosai.pages.dev.attacker.example" },
+  });
+  const response = await gateway.fetch(request, runtime);
+  assert.equal(response.status, 403);
 });

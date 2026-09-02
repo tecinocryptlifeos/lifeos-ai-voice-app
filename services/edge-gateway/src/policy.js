@@ -45,6 +45,9 @@ export const NEVER_REPLAY_PATH_FRAGMENTS = Object.freeze([
   "admin",
 ]);
 
+const PUBLIC_SITE_ORIGIN = "https://lifeosai.pages.dev";
+const PAGES_PREVIEW_PATTERN = /^https:\/\/[a-z0-9-]+\.lifeosai\.pages\.dev$/i;
+
 export class GatewayError extends Error {
   constructor(status, code, message, extra = {}) {
     super(message);
@@ -88,6 +91,10 @@ export function requireIdempotencyKey(request) {
   return value;
 }
 
+function isTrustedPagesPreviewOrigin(origin) {
+  return origin === PUBLIC_SITE_ORIGIN || PAGES_PREVIEW_PATTERN.test(origin);
+}
+
 export function configuredOrigins(env) {
   return String(env.LIFEOS_ALLOWED_ORIGINS || "")
     .split(",")
@@ -105,11 +112,13 @@ export function configuredOrigins(env) {
 export function requestOriginAllowed(request, env) {
   const origin = String(request.headers.get("Origin") || "").trim();
   if (!origin) return true;
+  if (isTrustedPagesPreviewOrigin(origin)) return true;
   return configuredOrigins(env).includes(origin);
 }
 
 export function corsOrigin(request, env) {
   const origin = String(request.headers.get("Origin") || "").trim();
+  if (isTrustedPagesPreviewOrigin(origin)) return origin;
   return origin && configuredOrigins(env).includes(origin) ? origin : "";
 }
 
@@ -121,8 +130,6 @@ export function responseHeaders(request, env, existing = new Headers()) {
   headers.set("X-Frame-Options", "DENY");
   headers.set("Referrer-Policy", "no-referrer");
   headers.set("Permissions-Policy", "camera=(), geolocation=(), payment=(), usb=()");
-  // Preview Pages deployments are intentionally cross-site; exact CORS still
-  // restricts every browser origin while allowing those previews to function.
   headers.set("Cross-Origin-Resource-Policy", "cross-origin");
   headers.set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'");
   headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
