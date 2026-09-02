@@ -1,0 +1,99 @@
+name: Cloudflare Worker production deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/edge-gateway/**"
+      - "infrastructure/cloudflare/wrangler.toml.template"
+      - ".github/workflows/cloudflare-worker-production-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out production source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: services/edge-gateway/package-lock.json
+
+      - name: Install pinned edge toolchain
+        run: npm ci --ignore-scripts --prefix services/edge-gateway
+
+      - name: Verify Worker source
+        run: |
+          npm --prefix services/edge-gateway test
+          npm --prefix services/edge-gateway run check
+          if grep -RInE --exclude-dir=node_modules 'RENDER_ORIGIN|NORTHFLANK_ORIGIN|losai\.onrender\.com|onrender\.com' services/edge-gateway infrastructure/cloudflare/wrangler.toml.template; then
+            echo "CLOUDFLARE_WORKER_EXTERNAL_ORIGIN=FAIL"
+            exit 1
+          fi
+          echo "CLOUDFLARE_WORKER_EXTERNAL_ORIGIN=PASS"
+
+      - name: Materialize production Wrangler configuration
+        env:
+          LIFEOS_ALLOWED_ORIGINS: ${{ secrets.LIFEOS_ALLOWED_ORIGINS }}
+          LIFEOS_PUBLIC_SITE_ORIGIN: ${{ secrets.LIFEOS_PUBLIC_SITE_ORIGIN }}
+          LIFEOS_API_ORIGIN: ${{ secrets.LIFEOS_API_ORIGIN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          ORIGIN_STATE_KV_ID: ${{ secrets.ORIGIN_STATE_KV_ID }}
+          RATE_LIMIT_NAMESPACE_ID: ${{ secrets.RATE_LIMIT_NAMESPACE_ID }}
+        working-directory: services/edge-gateway
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          template = Path("../../infrastructure/cloudflare/wrangler.toml.template").read_text(encoding="utf-8")
+          values = {
+              "__LIFEOS_ALLOWED_ORIGINS__": os.environ.get("LIFEOS_ALLOWED_ORIGINS", ""),
+              "__LIFEOS_PUBLIC_SITE_ORIGIN__": os.environ.get("LIFEOS_PUBLIC_SITE_ORIGIN", "https://lifeosai.pages.dev"),
+              "__LIFEOS_API_ORIGIN__": os.environ.get("LIFEOS_API_ORIGIN", "https://api.losai.ng.eu.org"),
+              "__SUPABASE_URL__": os.environ.get("SUPABASE_URL", ""),
+              "__SUPABASE_PUBLISHABLE_KEY__": os.environ.get("SUPABASE_PUBLISHABLE_KEY", ""),
+              "__ORIGIN_STATE_KV_ID__": os.environ.get("ORIGIN_STATE_KV_ID", ""),
+              "__RATE_LIMIT_NAMESPACE_ID__": os.environ.get("RATE_LIMIT_NAMESPACE_ID", ""),
+          }
+          missing = [k for k, v in values.items() if not v]
+          if missing:
+              raise SystemExit("Missing required production configuration: " + ", ".join(missing))
+          rendered = template
+          for key, value in values.items():
+              rendered = rendered.replace(key, value)
+          Path("wrangler.toml").write_text(rendered, encoding="utf-8")
+          PY
+          test -s wrangler.toml
+
+      - name: Authenticate Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --prefix services/edge-gateway wrangler whoami
+
+      - name: Deploy authoritative Worker to production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        working-directory: services/edge-gateway
+        run: npx wrangler deploy --config wrangler.toml
+
+      - name: Publish Gemini API key to the Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        working-directory: services/edge-gateway
+        run: |
+          test -n "$GEMINI_API_KEY"
+          printf '%s' "$GEMINI_API_KEY" | npx wrangler secret put GEMINI_API_KEY --config wrangler.toml
