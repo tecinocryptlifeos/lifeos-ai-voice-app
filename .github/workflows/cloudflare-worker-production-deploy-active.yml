@@ -1,4 +1,4 @@
-name: Cloudflare Worker production deploy
+name: Cloudflare Worker production deploy (active)
 
 on:
   pull_request:
