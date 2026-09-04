@@ -3,10 +3,6 @@ name: Cloudflare Worker production deploy
 on:
   push:
     branches: [main]
-    paths:
-      - "services/edge-gateway/**"
-      - "infrastructure/cloudflare/wrangler.toml.template"
-      - ".github/workflows/cloudflare-worker-production-deploy.yml"
   workflow_dispatch:
 
 permissions:
