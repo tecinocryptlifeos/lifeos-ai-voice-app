@@ -1,0 +1,1 @@
+This marker intentionally triggers the protected main-branch Cloudflare Worker production deployment workflow so the authoritative Gemini routing fix is exercised end-to-end.
